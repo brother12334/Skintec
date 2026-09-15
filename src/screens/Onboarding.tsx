@@ -4,7 +4,8 @@ import type { MorningMode, TretinoinFrequency } from '../types';
 import { FREQUENCY_LABEL } from '../data/defaults';
 import { isValidISO } from '../engine/dates';
 import { SkinTecIcon, SkinTecMark } from '../icons/SkinTecIcon';
-import { Button, Field, Notice, Segmented } from '../components/ui';
+import { Button, Field, Notice } from '../components/ui';
+import { MorningChooser } from '../components/MorningChooser';
 
 export function Onboarding({ today }: { today: string }) {
   const { state, updateSettings, updateProgression } = useStore();
@@ -44,21 +45,11 @@ export function Onboarding({ today }: { today: string }) {
         <>
           <p className="st-soft">You can switch at any time from Today or Settings.</p>
           <div className="st-mt-4">
-            <Segmented<MorningMode>
-              label="Morning routine mode"
-              value={morningMode}
-              onChange={setMorningMode}
-              options={[
-                { value: 'standard', label: 'Standard' },
-                { value: 'skin_aqua', label: 'Skin Aqua' },
-              ]}
-            />
+            <MorningChooser state={state} value={morningMode} onChange={setMorningMode} />
           </div>
           <div className="st-mt-4">
             <Notice tone="plain" icon="sunscreen">
-              {morningMode === 'standard'
-                ? 'Standard: LRP Triple Repair, then sunscreen.'
-                : 'Skin Aqua: the UV serum on its own — nothing else added.'}
+              Whichever you pick, SkinTec adds nothing else to your morning.
             </Notice>
           </div>
         </>

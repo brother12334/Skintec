@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import type { MorningMode, TretinoinFrequency } from '../types';
+import type { TretinoinFrequency } from '../types';
 import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
 import { WEEKDAY_KEYS, WEEKDAY_LABELS, isValidISO } from '../engine/dates';
 import { effectiveProgression } from '../engine/progression';
 import { SkinTecIcon } from '../icons/SkinTecIcon';
-import { Badge, Button, Field, Modal, Notice, Segmented, SettingRow, Switch, useToast } from '../components/ui';
+import { Badge, Button, Field, Modal, Notice, SettingRow, Switch, useToast } from '../components/ui';
+import { MorningChooser } from '../components/MorningChooser';
 
 const FREQUENCIES: TretinoinFrequency[] = [
   'twice_weekly',
@@ -38,20 +39,19 @@ export function SettingsScreen({ today }: { today: string }) {
           <SkinTecIcon name="morning" size={22} />
         </div>
         <p className="st-xs st-muted st-mt-2">
-          Standard is LRP Triple Repair then sunscreen. Skin Aqua is the UV serum on its own.
+          Pick what your mornings look like. Nothing else is ever added automatically.
         </p>
         <div className="st-mt-3">
-          <Segmented<MorningMode>
-            label="Morning routine mode"
+          <MorningChooser
+            state={state}
             value={state.settings.morningMode}
             onChange={(mode) => {
               updateSettings({ morningMode: mode });
-              toast(mode === 'skin_aqua' ? 'Skin Aqua mornings on' : 'Standard mornings on', 'morning');
+              toast(
+                mode === 'skin_aqua' ? 'Mornings: UV serum only' : 'Mornings: moisturizer and sunscreen',
+                'morning',
+              );
             }}
-            options={[
-              { value: 'standard', label: 'Standard' },
-              { value: 'skin_aqua', label: 'Skin Aqua' },
-            ]}
           />
         </div>
       </section>

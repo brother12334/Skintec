@@ -6,9 +6,9 @@ import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
 import { formatLongDate, formatShortDate } from '../engine/dates';
 import { SkinTecIcon } from '../icons/SkinTecIcon';
 import { Badge, Button, Notice, ProgressRing, Segmented, useToast } from '../components/ui';
+import { MorningChooser } from '../components/MorningChooser';
 import { RoutinePlayer } from '../components/RoutinePlayer';
 import { CheckInSheet } from '../components/CheckInSheet';
-import type { MorningMode } from '../types';
 
 function greeting(hour: number): string {
   if (hour < 5) return 'Still up';
@@ -114,7 +114,7 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
                       </Badge>
                     ) : (
                       <Badge tone="neutral" icon="sunscreen">
-                        {state.settings.morningMode === 'skin_aqua' ? 'Skin Aqua' : 'Standard'}
+                        {state.settings.morningMode === 'skin_aqua' ? 'UV serum only' : 'Moisturizer + sunscreen'}
                       </Badge>
                     )}
                     {isNight && routine.pm.maskName ? (
@@ -168,19 +168,18 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
               {!isNight ? (
                 <div className="st-mt-4">
                   <p className="st-xs st-muted" style={{ marginBottom: 6 }}>
-                    Morning routine
+                    Choose your morning
                   </p>
-                  <Segmented<MorningMode>
-                    label="Morning routine mode"
+                  <MorningChooser
+                    state={state}
                     value={state.settings.morningMode}
                     onChange={(mode) => {
                       updateSettings({ morningMode: mode });
-                      toast(mode === 'skin_aqua' ? 'Skin Aqua mornings on' : 'Standard mornings on', 'morning');
+                      toast(
+                        mode === 'skin_aqua' ? 'Mornings: UV serum only' : 'Mornings: moisturizer and sunscreen',
+                        'morning',
+                      );
                     }}
-                    options={[
-                      { value: 'standard', label: 'Standard' },
-                      { value: 'skin_aqua', label: 'Skin Aqua' },
-                    ]}
                   />
                 </div>
               ) : null}

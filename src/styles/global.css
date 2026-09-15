@@ -418,3 +418,37 @@ button { font: inherit; color: inherit; }
   text-align: center; padding: var(--st-8) var(--st-5); color: var(--st-ink-muted);
   border: 1px dashed var(--st-line-strong); border-radius: var(--st-r-lg);
 }
+
+/* ---------------- Morning chooser ---------------- */
+
+.st-choice-group { display: grid; gap: var(--st-2); }
+.st-choice {
+  display: block; width: 100%; text-align: left;
+  padding: var(--st-4);
+  border-radius: var(--st-r-md); border: 1px solid var(--st-line-strong);
+  background: var(--st-surface); cursor: pointer;
+  transition: border-color var(--st-fast), box-shadow var(--st-fast), background var(--st-fast);
+}
+.st-choice.is-selected {
+  border-color: var(--st-yellow-400);
+  box-shadow: 0 0 0 3px var(--st-yellow-100);
+  background: linear-gradient(180deg, var(--st-yellow-100), var(--st-surface) 70%);
+}
+.st-choice-head { display: flex; align-items: center; justify-content: space-between; gap: var(--st-3); }
+.st-choice-label { font-weight: 700; font-size: var(--st-text-md); }
+.st-choice-tick {
+  flex: none; width: 24px; height: 24px; border-radius: var(--st-r-pill);
+  border: 2px solid var(--st-line-strong);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--st-green-600);
+}
+.st-choice-tick.is-on { border-color: var(--st-green-300); background: var(--st-green-100); }
+.st-choice-steps {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-top: var(--st-2); color: var(--st-ink-soft); font-size: var(--st-text-sm);
+}
+.st-choice-step { display: inline-flex; align-items: center; gap: 6px; }
+.st-choice-sep {
+  width: 14px; height: 1.6px; border-radius: 2px;
+  background: var(--st-line-strong); margin-left: 6px;
+}
