@@ -219,25 +219,23 @@ export function SkinTecIcon({ name, size = 22, title, className, strokeWidth = 1
   );
 }
 
-/** The SkinTec wordmark lockup — gradient tile plus the product name. */
+/** The SkinTec mark: a sheet mask on the warm SkinTec tile. */
 export function SkinTecMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
       <defs>
-        <linearGradient id="st-mark-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FFDE82" />
-          <stop offset="1" stopColor="#FFB078" />
+        <linearGradient id="st-mark-grad" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0" stopColor="#FFE08C" />
+          <stop offset="0.55" stopColor="#FFC061" />
+          <stop offset="1" stopColor="#FFA97A" />
         </linearGradient>
       </defs>
-      <rect width="64" height="64" rx="16" fill="url(#st-mark-grad)" />
+      <rect width="64" height="64" rx="14" fill="url(#st-mark-grad)" />
       <path
-        d="M46 20.5A18 18 0 1 0 32 50a18 18 0 0 0 13.2-29.5"
-        fill="none"
-        stroke="#FFFDF8"
-        strokeWidth="5.5"
-        strokeLinecap="round"
+        fill="#FFFDF8"
+        fillRule="evenodd"
+        d="M32 9.4c10.9 0 18.4 3.5 18.4 9.2 0 4.1-1.4 11.3-3.8 18.5C43.9 46.4 38.9 55 32 55s-11.9-8.6-14.6-17.9C15 29.9 13.6 22.7 13.6 18.6c0-5.7 7.5-9.2 18.4-9.2Z M17.9 28.4a5 2.8 0 1 0 10 0a5 2.8 0 1 0-10 0Z M36.1 28.4a5 2.8 0 1 0 10 0a5 2.8 0 1 0-10 0Z M26.2 42.6a5.8 2.7 0 1 0 11.6 0a5.8 2.7 0 1 0-11.6 0Z"
       />
-      <circle cx="32" cy="32" r="5.5" fill="#FFFDF8" />
     </svg>
   );
 }

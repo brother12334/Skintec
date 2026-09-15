@@ -36,9 +36,8 @@ button { font: inherit; color: inherit; }
   gap: 16px; background: #FFFBF2;
 }
 .boot-mark {
-  width: 74px; height: 74px; border-radius: 22px;
-  background: linear-gradient(180deg, #FFDE82, #FFB078);
-  box-shadow: 0 12px 28px rgba(224, 163, 42, 0.28);
+  width: 74px; height: 74px;
+  filter: drop-shadow(0 12px 28px rgba(224, 163, 42, 0.28));
 }
 .boot-name { font-family: var(--st-font); letter-spacing: 0.02em; font-weight: 600; color: #2B2722; }
 

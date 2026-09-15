@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SkinTec">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFDE82"/>
-      <stop offset="1" stop-color="#FFB078"/>
+    <linearGradient id="st-tile" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#FFE08C"/>
+      <stop offset="0.55" stop-color="#FFC061"/>
+      <stop offset="1" stop-color="#FFA97A"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <path d="M46 20.5A18 18 0 1 0 32 50a18 18 0 0 0 13.2-29.5" fill="none" stroke="#FFFDF8" stroke-width="5.5" stroke-linecap="round"/>
-  <circle cx="32" cy="32" r="5.5" fill="#FFFDF8"/>
+  <rect width="64" height="64" rx="14" fill="url(#st-tile)"/>
+  <path
+    fill="#FFFDF8"
+    fill-rule="evenodd"
+    d="M32 9.4c10.9 0 18.4 3.5 18.4 9.2 0 4.1-1.4 11.3-3.8 18.5C43.9 46.4 38.9 55 32 55s-11.9-8.6-14.6-17.9C15 29.9 13.6 22.7 13.6 18.6c0-5.7 7.5-9.2 18.4-9.2Z
+       M17.9 28.4a5 2.8 0 1 0 10 0a5 2.8 0 1 0-10 0Z
+       M36.1 28.4a5 2.8 0 1 0 10 0a5 2.8 0 1 0-10 0Z
+       M26.2 42.6a5.8 2.7 0 1 0 11.6 0a5.8 2.7 0 1 0-11.6 0Z"/>
 </svg>

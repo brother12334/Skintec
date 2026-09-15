@@ -1,5 +1,5 @@
 /* SkinTec service worker — app-shell caching for offline routines. */
-const VERSION = 'skintec-v1';
+const VERSION = 'skintec-v2';
 const SHELL = [
   './',
   './index.html',
