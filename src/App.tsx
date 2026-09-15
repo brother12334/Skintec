@@ -10,6 +10,7 @@ import { ProgressScreen } from './screens/Progress';
 import { SettingsScreen } from './screens/Settings';
 import { Onboarding } from './screens/Onboarding';
 import { toISO } from './engine/dates';
+import { dayPart, resolveTheme } from './engine/daypart';
 
 /** Keeps the app on the right calendar day across midnight, sleep and timezone changes. */
 function useLocalClock() {
@@ -41,9 +42,20 @@ function Shell() {
   const { today, hour } = useLocalClock();
   const [tab, setTab] = useState<TabKey>('today');
 
+  const theme = resolveTheme(state.settings.themeMode, hour);
+  const part = dayPart(hour);
+
   useEffect(() => {
     document.documentElement.classList.toggle('st-reduce', state.settings.reducedMotion);
   }, [state.settings.reducedMotion]);
+
+  // SkinTec dims itself after dark. The meta colour keeps the iOS status bar
+  // and the standalone window in step with the theme.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'night' ? '#131219' : '#FFFBF2');
+  }, [theme]);
 
   useEffect(() => {
     document.title = tab === 'today' ? 'SkinTec' : `SkinTec — ${TAB_TITLES[tab]}`;
@@ -62,7 +74,11 @@ function Shell() {
               <div className="st-wordmark-sub">{TAB_TITLES[tab]}</div>
             </div>
           </div>
-          <SkinTecIcon name={hour >= 5 && hour < 17 ? 'morning' : 'night'} size={22} title={hour >= 5 && hour < 17 ? 'Daytime' : 'Evening'} />
+          <SkinTecIcon
+            name={part === 'am' ? 'morning' : 'night'}
+            size={22}
+            title={part === 'am' ? 'Daytime' : 'Evening'}
+          />
         </div>
       </header>
 

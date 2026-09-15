@@ -15,11 +15,17 @@ keeps recovery nights real, and places masks only where they are compatible.
   and the routine cannot be completed without it.
 - **Frequency progression** — 2× weekly → 3× weekly → every other night → nightly, advancing
   automatically but never past the prescriber-approved maximum you configure.
+- **Derma stamp** — one night a week (Wednesday by default), with argan oil immediately after
+  the stamp and moisturizer to close. Tretinoin, retinol and masks are never scheduled on it, and
+  a treatment night the stamp displaces moves to the nearest suitable night so the weekly count
+  is preserved.
 - **Recovery nights** — cleanse, cleanse, moisturize, with a compatible mask when one is due.
 - **Mask compatibility** — the Alaskan Volcano Mask never lands on a treatment night, Volcano and
   LaserDerm never stack, and a mask whose preferred day is a treatment night moves to the nearest
   suitable recovery night.
 - **Retinol compatibility** — retinol is never scheduled alongside tretinoin.
+- **Day and night** — Today shows only the routine that is current, with the other one tap away,
+  and the whole app switches to a dark theme from 6pm (overridable in Settings → Appearance).
 - **Skin check-ins** — comfortable / a little dry / irritated / very irritated, plus dryness,
   stinging, redness and peeling. Significant irritation pauses progression and favours recovery.
 
@@ -48,7 +54,7 @@ Progression stages are configuration (`TretinoinProgressionStage[]`), not hard-c
 ```bash
 npm install
 npm run dev        # local dev server
-npm test           # scheduling-engine checks (18)
+npm test           # scheduling-engine checks (24)
 npm run build      # typecheck + production build
 npm run preview    # serve the production build
 ```

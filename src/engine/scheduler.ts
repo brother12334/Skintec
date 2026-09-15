@@ -12,6 +12,7 @@ import type {
 import { PRODUCT_IDS } from '../data/defaults';
 import {
   addDays,
+  formatShortDate,
   daysBetween,
   isValidISO,
   startOfWeek,
@@ -146,6 +147,27 @@ export function buildRecoveryNight(state: AppState, mask?: Mask): RoutineTemplat
   return { id: 'pm-recovery', type: 'pm_recovery', steps };
 }
 
+/**
+ * Derma stamp night. Argan oil follows the stamp immediately — the two are a
+ * single pair, so the oil step always sits directly after it and is mandatory.
+ * Microneedling is never combined with tretinoin, retinol or a mask.
+ */
+export function buildDermaStampNight(state: AppState): RoutineTemplate {
+  const { products } = state;
+  return {
+    id: 'pm-derma-stamp',
+    type: 'pm_derma_stamp',
+    steps: [
+      step('pm-ds-1', productName(products, PRODUCT_IDS.anuaFirst, 'Anua First Cleanser'), 'cleanser', 'Massage over dry skin, then rinse.', true, PRODUCT_IDS.anuaFirst),
+      step('pm-ds-2', productName(products, PRODUCT_IDS.anuaSecond, 'Anua Second Cleanser'), 'cleanser', 'Follow with a gentle second cleanse and rinse.', true, PRODUCT_IDS.anuaSecond),
+      step('pm-ds-3', 'Allow skin to dry completely', 'wait', 'Wait until skin is fully dry before stamping.', true),
+      step('pm-ds-4', productName(products, PRODUCT_IDS.dermaStamp, 'Derma Stamp'), 'derma_stamp', 'Work in sections as directed. Use a clean, disinfected stamp.', true, PRODUCT_IDS.dermaStamp),
+      step('pm-ds-5', productName(products, PRODUCT_IDS.arganOil, 'Argan Oil'), 'oil', 'Apply immediately after stamping, while skin is still bare.', true, PRODUCT_IDS.arganOil),
+      step('pm-ds-6', productName(products, PRODUCT_IDS.lrp, 'LRP Triple Repair'), 'moisturizer', 'Finish with an even layer to support your barrier.', true, PRODUCT_IDS.lrp),
+    ],
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * Tretinoin night pattern
  * ------------------------------------------------------------------ */
@@ -180,7 +202,15 @@ export function isTretinoinNight(
  * Week planning (base nights + mask placement)
  * ------------------------------------------------------------------ */
 
+/** Is this the weekly derma stamp night? */
+function isDermaStampNight(state: AppState, date: string): boolean {
+  return state.settings.dermaStampActive && weekdayKey(date) === state.settings.dermaStampDay;
+}
+
 function baseNight(state: AppState, date: string): NightPlan {
+  // The derma stamp claims its night outright: nothing else intensive shares it.
+  if (isDermaStampNight(state, date)) return { kind: 'derma_stamp' };
+
   const progression = effectiveProgression(state, date);
   if (!state.settings.tretinoinActive || !progression.frequency) {
     return { kind: 'recovery' };
@@ -196,6 +226,7 @@ function baseNight(state: AppState, date: string): NightPlan {
 
 function maskFitsNight(mask: Mask, plan: NightPlan, state: AppState, assigned: Mask | undefined): boolean {
   if (assigned) return false; // one mask per night — never stack treatments
+  if (plan.kind === 'derma_stamp') return false; // never stacked on microneedling
   if (plan.kind === 'tretinoin' && (mask.avoidWithTretinoin || mask.requiresRecoveryNight)) return false;
   if (plan.kind === 'recovery' && state.settings.retinolActive && mask.avoidWithRetinol) return false;
   return true;
@@ -216,6 +247,29 @@ export function planWeek(state: AppState, anyDateInWeek: string): WeekPlan {
     const date = addDays(weekStart, i);
     return { date, plan: baseNight(state, date) };
   });
+
+  // If the derma stamp landed on what the pattern wanted as a treatment night,
+  // move that treatment night to the nearest free night rather than losing it.
+  const stampIndex = days.findIndex((d) => d.plan.kind === 'derma_stamp');
+  if (stampIndex >= 0 && state.settings.tretinoinActive) {
+    const progression = effectiveProgression(state, days[stampIndex].date);
+    const restart = isValidISO(state.settings.restartDate) ? state.settings.restartDate : days[0].date;
+    const wanted =
+      progression.frequency != null &&
+      isTretinoinNight(progression.frequency, restart, days[stampIndex].date) &&
+      !readIrritation(state, days[stampIndex].date).significant;
+
+    if (wanted) {
+      for (let delta = 1; delta <= 6; delta++) {
+        const candidates = [stampIndex + delta, stampIndex - delta].filter((i) => i >= 0 && i <= 6);
+        const target = candidates.find((i) => days[i].plan.kind === 'recovery');
+        if (target !== undefined) {
+          days[target].plan = { kind: 'tretinoin', tretinoinMovedFrom: days[stampIndex].date };
+          break;
+        }
+      }
+    }
+  }
 
   const assigned = new Map<string, Mask>();
   const masks = state.masks
@@ -275,7 +329,12 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
   const mask = day.plan.maskId ? state.masks.find((m) => m.id === day.plan.maskId) : undefined;
 
   const isTretinoin = day.plan.kind === 'tretinoin';
-  const pm = isTretinoin ? buildTretinoinNight(state) : buildRecoveryNight(state, mask);
+  const isDermaStamp = day.plan.kind === 'derma_stamp';
+  const pm = isDermaStamp
+    ? buildDermaStampNight(state)
+    : isTretinoin
+      ? buildTretinoinNight(state)
+      : buildRecoveryNight(state, mask);
 
   const notices: string[] = [];
   if (progression.paused && progression.pauseReason) {
@@ -290,8 +349,21 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
       `${mask?.name ?? 'A mask'} moved to tonight — its usual night is a treatment night.`,
     );
   }
-  if (state.settings.retinolActive && isTretinoin) {
-    notices.push('Retinol is not scheduled tonight. Retinol and tretinoin are never combined.');
+  if (state.settings.retinolActive && (isTretinoin || isDermaStamp)) {
+    notices.push(
+      isTretinoin
+        ? 'Retinol is not scheduled tonight. Retinol and tretinoin are never combined.'
+        : 'Retinol is not scheduled tonight. SkinTec keeps it away from derma stamp nights.',
+    );
+  }
+  if (isDermaStamp) {
+    notices.push('Derma stamp night. Tretinoin and masks are never scheduled alongside it.');
+  }
+  const movedTretinoin = week.days.find((d) => d.plan.tretinoinMovedFrom === safeDate);
+  if (movedTretinoin) {
+    notices.push(
+      `Your treatment night moved to ${formatShortDate(movedTretinoin.date)} — tonight is your derma stamp.`,
+    );
   }
 
   return {
@@ -304,12 +376,16 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
     },
     pm: {
       type: pm.type,
-      title: isTretinoin ? 'Tretinoin night' : 'Recovery night',
-      subtitle: mask && !isTretinoin ? `Recovery with ${mask.name}` : pm.steps.map((s) => s.name).join(' → '),
+      title: isDermaStamp ? 'Derma stamp night' : isTretinoin ? 'Tretinoin night' : 'Recovery night',
+      subtitle:
+        mask && !isTretinoin && !isDermaStamp
+          ? `Recovery with ${mask.name}`
+          : pm.steps.map((s) => s.name).join(' → '),
       steps: pm.steps,
       maskId: mask?.id,
       maskName: mask?.name,
       maskMovedFrom: day.plan.maskMovedFrom,
+      tretinoinMovedFrom: day.plan.tretinoinMovedFrom,
     },
     stage: progression.stage,
     stageIndex: progression.stageIndex,

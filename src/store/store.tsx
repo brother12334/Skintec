@@ -65,6 +65,10 @@ export function hydrate(raw: unknown): { state: AppState; recovered: boolean } {
       ...base.settings,
       ...s,
       morningMode: s.morningMode === 'skin_aqua' ? 'skin_aqua' : 'standard',
+      themeMode:
+        s.themeMode === 'light' || s.themeMode === 'dark' || s.themeMode === 'auto'
+          ? s.themeMode
+          : base.settings.themeMode,
       restartDate: isValidISO(s.restartDate) ? (s.restartDate as string) : base.settings.restartDate,
       notifications: { ...base.settings.notifications, ...(isObject(s.notifications) ? s.notifications : {}) },
     };

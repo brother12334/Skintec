@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { createDefaultState } from '../data/defaults';
-import { addDays, startOfWeek, weekdayKey } from './dates';
+import { addDays, daysBetween, startOfWeek, weekdayKey } from './dates';
 import { effectiveProgression } from './progression';
 import { getDailyRoutine, isTretinoinNight, planWeek } from './scheduler';
 import type { AppState, SkinCheckIn } from '../types';
@@ -237,13 +237,96 @@ test('an invalid date falls back instead of throwing', () => {
   assert.ok(routine.pm.steps.length > 0);
 });
 
-test('with tretinoin inactive every night is a recovery night', () => {
+test('with tretinoin inactive no night schedules tretinoin', () => {
   const state = stateAt(RESTART, (s) => {
     s.settings.tretinoinActive = false;
   });
   for (let i = 0; i < 14; i++) {
-    assert.equal(getDailyRoutine(state, addDays(RESTART, i)).pm.type, 'pm_recovery');
+    const date = addDays(RESTART, i);
+    const routine = getDailyRoutine(state, date);
+    assert.ok(!routine.pm.steps.some((s) => s.kind === 'tretinoin'), date);
+    assert.equal(routine.pm.type, weekdayKey(date) === 'wed' ? 'pm_derma_stamp' : 'pm_recovery', date);
   }
+});
+
+test('the derma stamp takes every Wednesday night', () => {
+  const state = stateAt(RESTART);
+  for (let week = 0; week < 8; week++) {
+    const plan = planWeek(state, addDays(RESTART, week * 7));
+    const wednesday = plan.days.find((d) => weekdayKey(d.date) === 'wed')!;
+    assert.equal(wednesday.plan.kind, 'derma_stamp', wednesday.date);
+  }
+});
+
+test('derma stamp night is cleanse, cleanse, dry, stamp, argan oil, moisturizer', () => {
+  const state = stateAt(RESTART);
+  const wednesday = addDays(RESTART, 2);
+  const routine = getDailyRoutine(state, wednesday);
+  assert.equal(routine.pm.type, 'pm_derma_stamp');
+  assert.deepEqual(
+    routine.pm.steps.map((s) => s.kind),
+    ['cleanser', 'cleanser', 'wait', 'derma_stamp', 'oil', 'moisturizer'],
+  );
+  // Argan oil sits immediately after the stamp, and neither step is optional.
+  const stampAt = routine.pm.steps.findIndex((s) => s.kind === 'derma_stamp');
+  assert.equal(routine.pm.steps[stampAt + 1].kind, 'oil');
+  assert.equal(routine.pm.steps[stampAt + 1].productId, 'argan-oil');
+  assert.ok(routine.pm.steps.every((s) => s.mandatory));
+});
+
+test('tretinoin, retinol and masks never share the derma stamp night', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.retinolActive = true;
+    s.progression.approvedMaxFrequency = 'nightly';
+    s.progression.currentStage = 3;
+  });
+  for (let i = 0; i < 40; i++) {
+    const date = addDays(RESTART, i);
+    if (weekdayKey(date) !== 'wed') continue;
+    const routine = getDailyRoutine(state, date);
+    assert.ok(!routine.pm.steps.some((s) => s.kind === 'tretinoin'), date);
+    assert.ok(!routine.pm.steps.some((s) => s.kind === 'retinol'), date);
+    assert.ok(!routine.pm.steps.some((s) => s.kind === 'mask'), date);
+    assert.equal(routine.pm.maskId, undefined, date);
+  }
+});
+
+test('a treatment night displaced by the derma stamp moves to a nearby night', () => {
+  // Every-other-night from a Monday restart puts tretinoin on Wednesday.
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'every_other_night';
+    s.progression.currentStage = 2;
+    s.progression.stageStartedAt = RESTART;
+  });
+  const plan = planWeek(state, RESTART);
+  const wednesday = plan.days.find((d) => weekdayKey(d.date) === 'wed')!;
+  assert.equal(wednesday.plan.kind, 'derma_stamp');
+  const moved = plan.days.find((d) => d.plan.tretinoinMovedFrom === wednesday.date);
+  assert.ok(moved, 'the displaced treatment night was rescheduled');
+  assert.equal(moved!.plan.kind, 'tretinoin');
+  assert.ok(Math.abs(daysBetween(wednesday.date, moved!.date)) <= 2);
+});
+
+test('the weekly tretinoin count is preserved when the stamp displaces a night', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'three_times_weekly';
+    s.progression.currentStage = 1;
+    s.progression.stageStartedAt = RESTART;
+  });
+  const withStamp = planWeek(state, RESTART).days.filter((d) => d.plan.kind === 'tretinoin').length;
+  const noStamp = planWeek(
+    { ...state, settings: { ...state.settings, dermaStampActive: false } },
+    RESTART,
+  ).days.filter((d) => d.plan.kind === 'tretinoin').length;
+  assert.equal(withStamp, noStamp);
+});
+
+test('turning the derma stamp off restores the plain pattern', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.dermaStampActive = false;
+  });
+  const plan = planWeek(state, RESTART);
+  assert.ok(!plan.days.some((d) => d.plan.kind === 'derma_stamp'));
 });
 
 console.log(`SkinTec scheduler: ${passed} checks passed`);

@@ -16,6 +16,7 @@ export function ProgressScreen({ today }: { today: string }) {
   const pmCount = finished.filter((c) => c.routine === 'pm').length;
   const tretinoinNights = finished.filter((c) => c.routineType === 'pm_tretinoin').length;
   const recoveryNights = finished.filter((c) => c.routineType === 'pm_recovery').length;
+  const dermaStampNights = finished.filter((c) => c.routineType === 'pm_derma_stamp').length;
   const maskNights = finished.filter(
     (c) => c.routine === 'pm' && c.completedSteps.some((id) => id.startsWith('pm-rec-mask-')),
   ).length;
@@ -37,6 +38,7 @@ export function ProgressScreen({ today }: { today: string }) {
     { label: 'Tretinoin nights', value: tretinoinNights },
     { label: 'Recovery nights', value: recoveryNights },
     { label: 'Mask nights', value: maskNights },
+    { label: 'Derma stamp nights', value: dermaStampNights },
     { label: 'Day streak', value: streak },
   ];
 

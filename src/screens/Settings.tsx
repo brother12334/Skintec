@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import type { TretinoinFrequency } from '../types';
+import type { ThemeMode, TretinoinFrequency } from '../types';
 import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
 import { WEEKDAY_KEYS, WEEKDAY_LABELS, isValidISO } from '../engine/dates';
 import { effectiveProgression } from '../engine/progression';
 import { SkinTecIcon } from '../icons/SkinTecIcon';
-import { Badge, Button, Field, Modal, Notice, SettingRow, Switch, useToast } from '../components/ui';
+import { Badge, Button, Field, Modal, Notice, Segmented, SettingRow, Switch, useToast } from '../components/ui';
 import { MorningChooser } from '../components/MorningChooser';
 
 const FREQUENCIES: TretinoinFrequency[] = [
@@ -214,6 +214,53 @@ export function SettingsScreen({ today }: { today: string }) {
         </SettingRow>
       </section>
 
+      {/* ---------------- Derma stamp ---------------- */}
+      <section className="st-card st-mt-4">
+        <div className="st-flex-between">
+          <h2 className="st-section-title" style={{ margin: 0 }}>
+            Derma stamp
+          </h2>
+          <SkinTecIcon name="dermastamp" size={22} />
+        </div>
+        <SettingRow
+          title="Weekly derma stamp"
+          sub="Followed immediately by argan oil, then moisturizer."
+        >
+          <Switch
+            checked={state.settings.dermaStampActive}
+            label="Weekly derma stamp"
+            onChange={(next) => {
+              updateSettings({ dermaStampActive: next });
+              toast(next ? 'Derma stamp scheduled weekly' : 'Derma stamp off', 'dermastamp');
+            }}
+          />
+        </SettingRow>
+        <div className="st-mt-3">
+          <Field label="Night" htmlFor="ds-day" hint="Tretinoin moves off this night automatically.">
+            <select
+              id="ds-day"
+              className="st-select"
+              value={state.settings.dermaStampDay}
+              disabled={!state.settings.dermaStampActive}
+              onChange={(e) => {
+                updateSettings({ dermaStampDay: e.target.value });
+                toast('Derma stamp night updated', 'calendar');
+              }}
+            >
+              {WEEKDAY_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {WEEKDAY_LABELS[key]}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <Notice tone="plain" icon="compatibility">
+          SkinTec never schedules tretinoin, retinol or a mask on a derma stamp night. If the pattern wanted
+          a treatment night here, it moves to the nearest suitable night.
+        </Notice>
+      </section>
+
       {/* ---------------- Masks ---------------- */}
       <section className="st-card st-mt-4">
         <div className="st-flex-between">
@@ -345,6 +392,20 @@ export function SettingsScreen({ today }: { today: string }) {
       {/* ---------------- Accessibility & data ---------------- */}
       <section className="st-card st-mt-4">
         <h2 className="st-section-title">Display and data</h2>
+        <div className="st-field">
+          <span className="st-label">Appearance</span>
+          <Segmented<ThemeMode>
+            label="Appearance"
+            value={state.settings.themeMode}
+            onChange={(mode) => updateSettings({ themeMode: mode })}
+            options={[
+              { value: 'auto', label: 'Auto' },
+              { value: 'light', label: 'Day', icon: 'morning' },
+              { value: 'dark', label: 'Night', icon: 'night' },
+            ]}
+          />
+          <p className="st-hint">Auto is bright through the day and dark from 6pm.</p>
+        </div>
         <SettingRow title="Reduce motion" sub="Turn off transitions and animations.">
           <Switch
             checked={state.settings.reducedMotion}

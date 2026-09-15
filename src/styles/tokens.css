@@ -27,6 +27,15 @@
 
   --st-focus: #2C6E9B;
 
+  /* Surfaces composed from the palette (overridden wholesale by the night theme) */
+  --st-subtle: #F6F1E8;
+  --st-track: #F0E9DC;
+  --st-body-glow: radial-gradient(120% 60% at 50% -10%, var(--st-yellow-100) 0%, rgba(255, 244, 210, 0) 60%);
+  --st-header-bg: linear-gradient(180deg, rgba(255, 251, 242, 0.96) 70%, rgba(255, 251, 242, 0));
+  --st-nav-bg: rgba(255, 253, 249, 0.94);
+  --st-toast-bg: #2B2722;
+  --st-toast-ink: #FFFDF9;
+
   /* Type */
   --st-font: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --st-text-xs: 0.75rem;
@@ -73,4 +82,58 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root { --st-fast: 1ms; --st-base: 1ms; }
+}
+
+/**
+ * Night theme.
+ *
+ * SkinTec dims itself after dark: the whole app is redefined here at the token
+ * level, so every card, badge and control follows without duplicated styling.
+ * Applied via data-theme="night" on <html>, set from the device clock (or the
+ * Appearance setting).
+ */
+:root[data-theme='night'] {
+  --st-cream: #131219;
+  --st-warm-white: #1A1922;
+  --st-surface: #201E2A;
+
+  --st-yellow-100: #372D14;
+  --st-yellow-200: #4A3C1B;
+  --st-yellow-400: #F0BE5C;
+  --st-yellow-600: #F2D089;
+
+  --st-sky-100: #16293A;
+  --st-sky-200: #21384C;
+  --st-sky-500: #5EA9DD;
+  --st-sky-700: #A3D2F2;
+
+  --st-peach-100: #3A2419;
+  --st-peach-300: #5C3B27;
+  --st-peach-600: #F2A97C;
+
+  --st-green-100: #17301D;
+  --st-green-300: #2E5B38;
+  --st-green-600: #92D89E;
+
+  --st-ink: #F3EFE8;
+  --st-ink-soft: #C2BAAE;
+  --st-ink-muted: #8E8679;
+  --st-line: #2A2733;
+  --st-line-strong: #3B3745;
+
+  --st-focus: #8CC6EE;
+
+  --st-subtle: #2A2733;
+  --st-track: #2A2733;
+  --st-body-glow: radial-gradient(120% 60% at 50% -10%, #23203180 0%, rgba(35, 32, 49, 0) 62%);
+  --st-header-bg: linear-gradient(180deg, rgba(19, 18, 25, 0.96) 70%, rgba(19, 18, 25, 0));
+  --st-nav-bg: rgba(26, 25, 34, 0.94);
+  --st-toast-bg: #F3EFE8;
+  --st-toast-ink: #201E2A;
+
+  --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.24);
+  --st-shadow-md: 0 2px 6px rgba(0, 0, 0, 0.36), 0 10px 24px rgba(0, 0, 0, 0.30);
+  --st-shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.42), 0 20px 44px rgba(0, 0, 0, 0.38);
+
+  color-scheme: dark;
 }

@@ -137,7 +137,7 @@ export function ProgressRing({
   const pct = total > 0 ? Math.min(1, value / total) : 0;
   return (
     <svg className="st-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F0E9DC" strokeWidth="6" />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--st-track)" strokeWidth="6" />
       <circle
         cx={size / 2}
         cy={size / 2}

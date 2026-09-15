@@ -13,6 +13,8 @@ export type SkinTecIconName =
   | 'moisturizer'
   | 'tretinoin'
   | 'retinol'
+  | 'dermastamp'
+  | 'oil'
   | 'mask'
   | 'recovery'
   | 'sunscreen'
@@ -79,6 +81,19 @@ const paths: Record<SkinTecIconName, JSX.Element> = {
     <>
       <path d="M12 3.6c3.3 3.7 5.4 6.4 5.4 9a5.4 5.4 0 0 1-10.8 0c0-2.6 2.1-5.3 5.4-9Z" />
       <path d="M9.6 12.9a2.4 2.4 0 0 0 2.4 2.4" />
+    </>
+  ),
+  dermastamp: (
+    <>
+      <path d="M10.2 3.8h3.6a1.6 1.6 0 0 1 1.6 1.6v6.2a1.6 1.6 0 0 1-1.6 1.6h-3.6a1.6 1.6 0 0 1-1.6-1.6V5.4a1.6 1.6 0 0 1 1.6-1.6Z" />
+      <path d="M8.2 16.4h7.6" />
+      <path d="M9.4 19.6v1M12 19.6v1M14.6 19.6v1M9.4 16.4v1.4M12 16.4v1.4M14.6 16.4v1.4" />
+    </>
+  ),
+  oil: (
+    <>
+      <path d="M10.4 3.8h3.2v2.6l2.2 2.8a4 4 0 0 1 .9 2.5v5.7a2.8 2.8 0 0 1-2.8 2.8h-3.8a2.8 2.8 0 0 1-2.8-2.8v-5.7a4 4 0 0 1 .9-2.5l2.2-2.8Z" />
+      <path d="M12 12.2c1.3 1.5 2 2.5 2 3.4a2 2 0 1 1-4 0c0-.9.7-1.9 2-3.4Z" />
     </>
   ),
   mask: (
@@ -242,6 +257,8 @@ export function SkinTecMark({ size = 32 }: { size?: number }) {
 
 export const STEP_ICON: Record<string, SkinTecIconName> = {
   cleanser: 'cleanser',
+  derma_stamp: 'dermastamp',
+  oil: 'oil',
   moisturizer: 'moisturizer',
   tretinoin: 'tretinoin',
   retinol: 'retinol',

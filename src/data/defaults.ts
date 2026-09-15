@@ -19,6 +19,8 @@ export const PRODUCT_IDS = {
   laserDermMask: 'laserderm-korean-mask',
   sunscreen: 'sunscreen',
   skinAqua: 'skin-aqua-uv-serum',
+  dermaStamp: 'derma-stamp',
+  arganOil: 'argan-oil',
 } as const;
 
 export const defaultProducts: Product[] = [
@@ -33,11 +35,14 @@ export const defaultProducts: Product[] = [
   { id: PRODUCT_IDS.laserDermMask, name: 'LaserDerm Korean Mask', shortName: 'LaserDerm Mask', category: 'mask', notes: 'Soothing sheet mask, recovery-compatible.', active: true, builtIn: true },
   { id: PRODUCT_IDS.sunscreen, name: 'Sunscreen', category: 'sunscreen', notes: 'Placeholder — rename it to the sunscreen you actually use.', active: true, builtIn: true },
   { id: PRODUCT_IDS.skinAqua, name: 'Skin Aqua UV Serum', category: 'sunscreen', notes: 'Used alone in Skin Aqua mornings.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.dermaStamp, name: 'Derma Stamp', category: 'treatment', notes: 'Weekly. Never on a tretinoin night — SkinTec keeps them apart.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.arganOil, name: 'Argan Oil', category: 'other', notes: 'Applied immediately after the derma stamp.', active: true, builtIn: true },
 ];
 
 export const defaultTreatments: Treatment[] = [
   { id: 'treatment-tretinoin', name: 'Tretinoin', active: true, frequency: 'Scheduled by SkinTec', concentration: '0.025%', notes: '' },
   { id: 'treatment-retinol', name: 'Retinol', active: false, frequency: 'Not scheduled', concentration: '', notes: 'Never combined with tretinoin.' },
+  { id: 'treatment-derma-stamp', name: 'Derma Stamp', active: true, frequency: 'Weekly', notes: 'Followed immediately by argan oil.' },
 ];
 
 export const defaultMasks: Mask[] = [
@@ -104,6 +109,8 @@ export const defaultSettings: Settings = {
   restartDate: todayISO(),
   prescriberNotes: '',
   retinolActive: false,
+  dermaStampActive: true,
+  dermaStampDay: 'wed',
   notifications: {
     morningReminder: false,
     morningTime: '07:30',
@@ -111,6 +118,7 @@ export const defaultSettings: Settings = {
     nightTime: '21:30',
     completionReminder: false,
   },
+  themeMode: 'auto',
   reducedMotion: false,
   onboarded: false,
 };

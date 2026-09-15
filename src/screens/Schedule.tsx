@@ -36,6 +36,13 @@ export function ScheduleScreen({ today }: { today: string }) {
       <div className="st-week st-mt-4">
         {week.days.map((day) => {
           const isTretinoin = day.plan.kind === 'tretinoin';
+          const isDermaStamp = day.plan.kind === 'derma_stamp';
+          const nightLabel = isDermaStamp
+            ? 'Derma stamp night'
+            : isTretinoin
+              ? 'Tretinoin night'
+              : 'Recovery night';
+          const nightIcon = isDermaStamp ? 'dermastamp' : isTretinoin ? 'tretinoin' : 'recovery';
           const mask = day.plan.maskId ? state.masks.find((m) => m.id === day.plan.maskId) : undefined;
           const completion = state.completions.find((c) => c.date === day.date && c.routine === 'pm' && c.completedAt);
           const past = day.date < today;
@@ -45,27 +52,29 @@ export function ScheduleScreen({ today }: { today: string }) {
               type="button"
               className={`st-day${day.date === today ? ' is-today' : ''}`}
               onClick={() => setSelected(day.date)}
-              aria-label={`${WEEKDAY_LABELS[weekdayKey(day.date)]} ${formatShortDate(day.date)}, ${
-                isTretinoin ? 'tretinoin night' : 'recovery night'
-              }${mask ? `, ${mask.name}` : ''}`}
+              aria-label={`${WEEKDAY_LABELS[weekdayKey(day.date)]} ${formatShortDate(day.date)}, ${nightLabel}${
+                mask ? `, ${mask.name}` : ''
+              }`}
             >
               <span className="st-day-date">
                 <span className="st-day-dow">{WEEKDAY_LABELS[weekdayKey(day.date)].slice(0, 3)}</span>
                 <span className="st-day-num">{fromISO(day.date).getDate()}</span>
               </span>
               <span className="st-day-main">
-                <span className="st-day-title">{isTretinoin ? 'Tretinoin night' : 'Recovery night'}</span>
+                <span className="st-day-title">{nightLabel}</span>
                 <span className="st-day-sub">
-                  {mask ? mask.name : isTretinoin ? 'Moisturizer sandwich' : 'Cleanse and repair'}
+                  {isDermaStamp
+                    ? 'Derma stamp, then argan oil'
+                    : mask
+                      ? mask.name
+                      : isTretinoin
+                        ? 'Moisturizer sandwich'
+                        : 'Cleanse and repair'}
                   {completion ? ' · completed' : past && !completion ? ' · not recorded' : ''}
                 </span>
               </span>
               <span className="st-day-marks">
-                <SkinTecIcon
-                  name={isTretinoin ? 'tretinoin' : 'recovery'}
-                  size={19}
-                  title={isTretinoin ? 'Tretinoin' : 'Recovery'}
-                />
+                <SkinTecIcon name={nightIcon} size={19} title={nightLabel} />
                 {mask ? <SkinTecIcon name="mask" size={19} title={`Mask: ${mask.name}`} /> : null}
                 {completion ? <SkinTecIcon name="completion" size={19} title="Completed" /> : null}
               </span>
@@ -84,7 +93,16 @@ export function ScheduleScreen({ today }: { today: string }) {
       {detail ? (
         <Modal title={formatLongDate(detail.date)} onClose={() => setSelected(null)}>
           <div className="st-chip-row">
-            <Badge tone={detail.pm.type === 'pm_tretinoin' ? 'treat' : 'recovery'} icon={detail.pm.type === 'pm_tretinoin' ? 'tretinoin' : 'recovery'}>
+            <Badge
+              tone={detail.pm.type === 'pm_recovery' ? 'recovery' : 'treat'}
+              icon={
+                detail.pm.type === 'pm_tretinoin'
+                  ? 'tretinoin'
+                  : detail.pm.type === 'pm_derma_stamp'
+                    ? 'dermastamp'
+                    : 'recovery'
+              }
+            >
               {detail.pm.title}
             </Badge>
             {detail.pm.maskName ? (

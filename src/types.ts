@@ -38,6 +38,8 @@ export type RoutineStepKind =
   | 'mask'
   | 'sunscreen'
   | 'serum'
+  | 'derma_stamp'
+  | 'oil'
   | 'wait';
 
 export type RoutineStep = {
@@ -54,7 +56,8 @@ export type RoutineType =
   | 'am_standard'
   | 'am_skin_aqua'
   | 'pm_tretinoin'
-  | 'pm_recovery';
+  | 'pm_recovery'
+  | 'pm_derma_stamp';
 
 export type RoutineTemplate = {
   id: string;
@@ -123,6 +126,9 @@ export type SkinCheckIn = {
 
 export type MorningMode = 'standard' | 'skin_aqua';
 
+/** 'auto' follows the device clock: bright by day, dark after dark. */
+export type ThemeMode = 'auto' | 'light' | 'dark';
+
 export type NotificationSettings = {
   morningReminder: boolean;
   morningTime: string;
@@ -138,7 +144,11 @@ export type Settings = {
   restartDate: string;
   prescriberNotes: string;
   retinolActive: boolean;
+  dermaStampActive: boolean;
+  /** Weekday key ('mon'…'sun') the derma stamp is scheduled on. */
+  dermaStampDay: string;
   notifications: NotificationSettings;
+  themeMode: ThemeMode;
   reducedMotion: boolean;
   onboarded: boolean;
 };
@@ -157,9 +167,11 @@ export type AppState = {
 
 /** What the scheduling engine returns for a given calendar date. */
 export type NightPlan = {
-  kind: 'tretinoin' | 'recovery';
+  kind: 'tretinoin' | 'recovery' | 'derma_stamp';
   maskId?: string;
   maskMovedFrom?: string;
+  /** Set when a treatment night was moved off the derma stamp night. */
+  tretinoinMovedFrom?: string;
 };
 
 export type DailyRoutine = {
@@ -178,6 +190,7 @@ export type DailyRoutine = {
     maskId?: string;
     maskName?: string;
     maskMovedFrom?: string;
+    tretinoinMovedFrom?: string;
   };
   stage: TretinoinProgressionStage | null;
   stageIndex: number;

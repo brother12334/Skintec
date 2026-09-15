@@ -4,8 +4,9 @@ import { getDailyRoutine } from '../engine/scheduler';
 import { effectiveProgression, restartWeek } from '../engine/progression';
 import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
 import { formatLongDate, formatShortDate } from '../engine/dates';
+import { dayPart } from '../engine/daypart';
 import { SkinTecIcon } from '../icons/SkinTecIcon';
-import { Badge, Button, Notice, ProgressRing, Segmented, useToast } from '../components/ui';
+import { Badge, Button, Notice, ProgressRing, useToast } from '../components/ui';
 import { MorningChooser } from '../components/MorningChooser';
 import { RoutinePlayer } from '../components/RoutinePlayer';
 import { CheckInSheet } from '../components/CheckInSheet';
@@ -20,7 +21,10 @@ function greeting(hour: number): string {
 export function TodayScreen({ today, hour }: { today: string; hour: number }) {
   const { state, updateSettings, setCompletion, addCheckIn } = useStore();
   const toast = useToast();
-  const [focus, setFocus] = useState<'am' | 'pm'>(hour >= 5 && hour < 17 ? 'am' : 'pm');
+  // Only the routine that is actually current is shown; the other stays one tap away.
+  const part = dayPart(hour);
+  const other: 'am' | 'pm' = part === 'am' ? 'pm' : 'am';
+  const [showOther, setShowOther] = useState(false);
   const [player, setPlayer] = useState<'am' | 'pm' | null>(null);
   const [checkIn, setCheckIn] = useState(false);
 
@@ -31,7 +35,7 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
   const pmDone = state.completions.find((c) => c.date === today && c.routine === 'pm');
   const todayCheckIn = state.checkIns.find((c) => c.date === today);
 
-  const cards = focus === 'am' ? (['am', 'pm'] as const) : (['pm', 'am'] as const);
+  const cards: ('am' | 'pm')[] = showOther ? [part, other] : [part];
 
   function save(routineKind: 'am' | 'pm', steps: string[], finished: boolean) {
     const target = routineKind === 'am' ? routine.am : routine.pm;
@@ -57,23 +61,13 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
         <p className="st-screen-sub">
           {routine.pm.type === 'pm_tretinoin'
             ? 'Tonight is a tretinoin night.'
-            : routine.pm.maskName
-              ? `Tonight is a recovery night with ${routine.pm.maskName}.`
-              : 'Tonight is a recovery night.'}
+            : routine.pm.type === 'pm_derma_stamp'
+              ? 'Tonight is your derma stamp night.'
+              : routine.pm.maskName
+                ? `Tonight is a recovery night with ${routine.pm.maskName}.`
+                : 'Tonight is a recovery night.'}
         </p>
       </header>
-
-      <div className="st-mt-4">
-        <Segmented
-          label="Show morning or night first"
-          value={focus}
-          onChange={setFocus}
-          options={[
-            { value: 'am', label: 'Morning', icon: 'morning' },
-            { value: 'pm', label: 'Night', icon: 'night' },
-          ]}
-        />
-      </div>
 
       {routine.notices.length > 0 ? (
         <div className="st-mt-4">
@@ -107,10 +101,16 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
                     </Badge>
                     {isNight ? (
                       <Badge
-                        tone={routine.pm.type === 'pm_tretinoin' ? 'treat' : 'recovery'}
-                        icon={routine.pm.type === 'pm_tretinoin' ? 'tretinoin' : 'recovery'}
+                        tone={routine.pm.type === 'pm_recovery' ? 'recovery' : 'treat'}
+                        icon={
+                          routine.pm.type === 'pm_tretinoin'
+                            ? 'tretinoin'
+                            : routine.pm.type === 'pm_derma_stamp'
+                              ? 'dermastamp'
+                              : 'recovery'
+                        }
                       >
-                        {routine.pm.type === 'pm_tretinoin' ? 'Tretinoin night' : 'Recovery night'}
+                        {routine.pm.title}
                       </Badge>
                     ) : (
                       <Badge tone="neutral" icon="sunscreen">
@@ -186,6 +186,23 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
             </section>
           );
         })}
+      </div>
+
+      <div className="st-mt-3 st-center">
+        <Button
+          variant="ghost"
+          small
+          icon={other === 'pm' ? 'night' : 'morning'}
+          onClick={() => setShowOther((v) => !v)}
+        >
+          {showOther
+            ? other === 'pm'
+              ? "Hide tonight's routine"
+              : "Hide this morning's routine"
+            : other === 'pm'
+              ? "Show tonight's routine"
+              : "Show this morning's routine"}
+        </Button>
       </div>
 
       <section className="st-card st-mt-4">
