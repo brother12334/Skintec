@@ -1,0 +1,249 @@
+/**
+ * Scheduling-engine checks.
+ * Run with: npm test  (node --experimental-strip-types, no test framework needed)
+ */
+import assert from 'node:assert/strict';
+import { createDefaultState } from '../data/defaults';
+import { addDays, startOfWeek, weekdayKey } from './dates';
+import { effectiveProgression } from './progression';
+import { getDailyRoutine, isTretinoinNight, planWeek } from './scheduler';
+import type { AppState, SkinCheckIn } from '../types';
+
+let passed = 0;
+function test(name: string, fn: () => void) {
+  try {
+    fn();
+    passed += 1;
+  } catch (error) {
+    console.error(`FAIL  ${name}`);
+    throw error;
+  }
+}
+
+function stateAt(restart: string, patch: (s: AppState) => void = () => {}): AppState {
+  const state = createDefaultState();
+  state.settings.restartDate = restart;
+  state.settings.onboarded = true;
+  state.progression.stageStartedAt = restart;
+  patch(state);
+  return state;
+}
+
+const RESTART = '2026-01-05'; // a Monday
+
+test('tretinoin nights per frequency', () => {
+  const countWeek = (frequency: Parameters<typeof isTretinoinNight>[0]) =>
+    Array.from({ length: 7 }, (_, i) => isTretinoinNight(frequency, RESTART, addDays(RESTART, i))).filter(Boolean)
+      .length;
+  assert.equal(countWeek('twice_weekly'), 2);
+  assert.equal(countWeek('three_times_weekly'), 3);
+  assert.equal(countWeek('every_other_night'), 4);
+  assert.equal(countWeek('nightly'), 7);
+});
+
+test('every-other-night alternates correctly across weeks and months', () => {
+  for (let i = 0; i < 120; i++) {
+    const date = addDays(RESTART, i);
+    assert.equal(isTretinoinNight('every_other_night', RESTART, date), i % 2 === 0, date);
+  }
+});
+
+test('progression climbs 2x -> 3x -> EON -> nightly when approved', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'nightly';
+  });
+  assert.equal(effectiveProgression(state, RESTART).frequency, 'twice_weekly');
+  assert.equal(effectiveProgression(state, addDays(RESTART, 14)).frequency, 'three_times_weekly');
+  assert.equal(effectiveProgression(state, addDays(RESTART, 28)).frequency, 'every_other_night');
+  assert.equal(effectiveProgression(state, addDays(RESTART, 42)).frequency, 'nightly');
+  assert.equal(effectiveProgression(state, addDays(RESTART, 400)).frequency, 'nightly');
+});
+
+test('progression never exceeds the prescriber-approved maximum', () => {
+  const capped = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'three_times_weekly';
+  });
+  assert.equal(effectiveProgression(capped, addDays(RESTART, 365)).frequency, 'three_times_weekly');
+
+  const eon = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'every_other_night';
+  });
+  assert.equal(effectiveProgression(eon, addDays(RESTART, 365)).frequency, 'every_other_night');
+});
+
+test('lowering the approved maximum clamps an advanced stage back down', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'twice_weekly';
+    s.progression.currentStage = 3;
+    s.progression.stageStartedAt = addDays(RESTART, 42);
+  });
+  assert.equal(effectiveProgression(state, addDays(RESTART, 60)).frequency, 'twice_weekly');
+});
+
+test('significant irritation pauses progression and favours recovery', () => {
+  const day = addDays(RESTART, 0);
+  const checkIn: SkinCheckIn = {
+    date: day,
+    comfort: 'very_irritated',
+    dryness: true,
+    stinging: true,
+    redness: false,
+    peeling: false,
+  };
+  const state = stateAt(RESTART, (s) => {
+    s.checkIns.push(checkIn);
+  });
+  const progression = effectiveProgression(state, day);
+  assert.equal(progression.paused, true);
+  assert.equal(progression.frequency, 'twice_weekly');
+
+  const routine = getDailyRoutine(state, day);
+  assert.equal(routine.pm.type, 'pm_recovery');
+  assert.ok(routine.notices.some((n) => n.includes('paused')));
+});
+
+test('paused progression holds the current frequency indefinitely', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.paused = true;
+    s.progression.approvedMaxFrequency = 'nightly';
+  });
+  assert.equal(effectiveProgression(state, addDays(RESTART, 200)).frequency, 'twice_weekly');
+});
+
+test('tretinoin night is the six-step moisturizer sandwich, closing on moisturizer', () => {
+  const state = stateAt(RESTART);
+  const routine = getDailyRoutine(state, RESTART);
+  assert.equal(routine.pm.type, 'pm_tretinoin');
+  assert.equal(routine.pm.steps.length, 6);
+  assert.deepEqual(
+    routine.pm.steps.map((s) => s.kind),
+    ['cleanser', 'cleanser', 'wait', 'moisturizer', 'tretinoin', 'moisturizer'],
+  );
+  assert.ok(routine.pm.steps.every((s) => s.mandatory), 'every tretinoin step is mandatory');
+  const last = routine.pm.steps[routine.pm.steps.length - 1];
+  assert.equal(last.kind, 'moisturizer');
+  assert.equal(last.mandatory, true);
+});
+
+test('morning modes stay exactly as configured', () => {
+  const standard = stateAt(RESTART);
+  const am = getDailyRoutine(standard, RESTART).am;
+  assert.deepEqual(am.steps.map((s) => s.kind), ['moisturizer', 'sunscreen']);
+
+  const aqua = stateAt(RESTART, (s) => {
+    s.settings.morningMode = 'skin_aqua';
+  });
+  const aquaAm = getDailyRoutine(aqua, RESTART).am;
+  assert.equal(aquaAm.steps.length, 1);
+  assert.equal(aquaAm.steps[0].productId, 'skin-aqua-uv-serum');
+
+  // Collagen Bank is in the library but never inserted automatically.
+  for (const state of [standard, aqua]) {
+    const routine = getDailyRoutine(state, RESTART);
+    const ids = [...routine.am.steps, ...routine.pm.steps].map((s) => s.productId);
+    assert.ok(!ids.includes('neutrogena-collagen-bank'));
+  }
+});
+
+test('recovery night has no tretinoin or retinol unless retinol is enabled', () => {
+  const state = stateAt(RESTART);
+  const recovery = getDailyRoutine(state, addDays(RESTART, 1));
+  assert.equal(recovery.pm.type, 'pm_recovery');
+  assert.ok(!recovery.pm.steps.some((s) => s.kind === 'tretinoin' || s.kind === 'retinol'));
+});
+
+test('retinol is never scheduled on a tretinoin night', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.retinolActive = true;
+    s.progression.approvedMaxFrequency = 'nightly';
+    s.progression.currentStage = 3;
+  });
+  for (let i = 0; i < 30; i++) {
+    const date = addDays(RESTART, i);
+    const routine = getDailyRoutine(state, date);
+    const hasTret = routine.pm.steps.some((s) => s.kind === 'tretinoin');
+    const hasRetinol = routine.pm.steps.some((s) => s.kind === 'retinol');
+    assert.ok(!(hasTret && hasRetinol), `retinol stacked with tretinoin on ${date}`);
+  }
+});
+
+test('masks never land on a tretinoin night and never stack', () => {
+  for (const max of ['twice_weekly', 'three_times_weekly', 'every_other_night'] as const) {
+    const state = stateAt(RESTART, (s) => {
+      s.progression.approvedMaxFrequency = max;
+    });
+    for (let week = 0; week < 12; week++) {
+      const plan = planWeek(state, addDays(RESTART, week * 7));
+      const seen = new Map<string, string>();
+      for (const day of plan.days) {
+        if (!day.plan.maskId) continue;
+        assert.equal(day.plan.kind, 'recovery', `mask on a treatment night ${day.date}`);
+        assert.ok(!seen.has(day.date), 'two masks on one night');
+        seen.set(day.date, day.plan.maskId);
+      }
+      // Volcano and LaserDerm never share a night.
+      const volcanoNights = plan.days.filter((d) => d.plan.maskId === 'mask-volcano').map((d) => d.date);
+      const laserNights = plan.days.filter((d) => d.plan.maskId === 'mask-laserderm').map((d) => d.date);
+      assert.equal(volcanoNights.filter((d) => laserNights.includes(d)).length, 0);
+    }
+  }
+});
+
+test('a mask whose preferred day is a treatment night moves to a recovery night', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.masks = s.masks.map((m) => (m.id === 'mask-volcano' ? { ...m, preferredDays: ['mon'] } : { ...m, enabled: false }));
+  });
+  const plan = planWeek(state, RESTART);
+  const monday = plan.days[0];
+  assert.equal(monday.plan.kind, 'tretinoin');
+  assert.equal(monday.plan.maskId, undefined);
+  const placed = plan.days.find((d) => d.plan.maskId === 'mask-volcano');
+  assert.ok(placed, 'volcano mask was rescheduled');
+  assert.equal(placed!.plan.kind, 'recovery');
+  assert.equal(placed!.plan.maskMovedFrom, monday.date);
+});
+
+test('mask weekly frequency limits are respected', () => {
+  const state = stateAt(RESTART);
+  const plan = planWeek(state, RESTART);
+  for (const mask of state.masks) {
+    const uses = plan.days.filter((d) => d.plan.maskId === mask.id).length;
+    assert.ok(uses <= mask.frequencyLimit, `${mask.name} exceeded its weekly limit`);
+  }
+});
+
+test('weeks always start on Monday and cover seven days', () => {
+  const state = stateAt(RESTART);
+  const plan = planWeek(state, '2026-03-12');
+  assert.equal(plan.days.length, 7);
+  assert.equal(weekdayKey(plan.weekStart), 'mon');
+  assert.equal(plan.weekStart, startOfWeek('2026-03-12'));
+});
+
+test('missed routines and date changes never corrupt the pattern', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'every_other_night';
+  });
+  const before = getDailyRoutine(state, '2026-07-04').pm.type;
+  state.completions.push({ date: '2026-02-02', routine: 'pm', routineType: 'pm_tretinoin', completedSteps: [] });
+  const after = getDailyRoutine(state, '2026-07-04').pm.type;
+  assert.equal(before, after);
+});
+
+test('an invalid date falls back instead of throwing', () => {
+  const state = stateAt(RESTART);
+  const routine = getDailyRoutine(state, 'not-a-date');
+  assert.ok(routine.am.steps.length > 0);
+  assert.ok(routine.pm.steps.length > 0);
+});
+
+test('with tretinoin inactive every night is a recovery night', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.tretinoinActive = false;
+  });
+  for (let i = 0; i < 14; i++) {
+    assert.equal(getDailyRoutine(state, addDays(RESTART, i)).pm.type, 'pm_recovery');
+  }
+});
+
+console.log(`SkinTec scheduler: ${passed} checks passed`);

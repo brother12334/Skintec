@@ -1,0 +1,76 @@
+/* SkinTec design tokens — one source of truth for colour, type, spacing and depth. */
+:root {
+  /* Palette: warm white, soft yellow, pale sky, peach, light green, cream */
+  --st-cream: #FFFBF2;
+  --st-warm-white: #FFFDF9;
+  --st-surface: #FFFFFF;
+  --st-yellow-100: #FFF4D2;
+  --st-yellow-200: #FFE7A6;
+  --st-yellow-400: #FFCE5C;
+  --st-yellow-600: #E0A32A;
+  --st-sky-100: #E7F3FC;
+  --st-sky-200: #CBE6F8;
+  --st-sky-500: #57A8DC;
+  --st-sky-700: #2C6E9B;
+  --st-peach-100: #FFEDE2;
+  --st-peach-300: #FFC9A8;
+  --st-peach-600: #D9743C;
+  --st-green-100: #E6F5E7;
+  --st-green-300: #B7E2BB;
+  --st-green-600: #3F8C4B;
+
+  --st-ink: #2B2722;
+  --st-ink-soft: #5D564D;
+  --st-ink-muted: #8A8175;
+  --st-line: #EFE7DA;
+  --st-line-strong: #E2D7C5;
+
+  --st-focus: #2C6E9B;
+
+  /* Type */
+  --st-font: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --st-text-xs: 0.75rem;
+  --st-text-sm: 0.8125rem;
+  --st-text-md: 0.9375rem;
+  --st-text-lg: 1.0625rem;
+  --st-text-xl: 1.375rem;
+  --st-text-2xl: 1.75rem;
+  --st-text-3xl: 2.125rem;
+
+  /* Spacing */
+  --st-1: 4px;
+  --st-2: 8px;
+  --st-3: 12px;
+  --st-4: 16px;
+  --st-5: 20px;
+  --st-6: 24px;
+  --st-8: 32px;
+  --st-10: 40px;
+  --st-12: 48px;
+
+  /* Radius */
+  --st-r-sm: 10px;
+  --st-r-md: 16px;
+  --st-r-lg: 22px;
+  --st-r-xl: 28px;
+  --st-r-pill: 999px;
+
+  /* Depth */
+  --st-shadow-sm: 0 1px 2px rgba(80, 64, 40, 0.05), 0 2px 8px rgba(80, 64, 40, 0.04);
+  --st-shadow-md: 0 2px 6px rgba(80, 64, 40, 0.06), 0 10px 24px rgba(80, 64, 40, 0.07);
+  --st-shadow-lg: 0 6px 16px rgba(80, 64, 40, 0.08), 0 20px 44px rgba(80, 64, 40, 0.10);
+
+  /* Motion */
+  --st-fast: 140ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  --st-base: 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* Layout */
+  --st-nav-h: 62px;
+  --st-safe-top: env(safe-area-inset-top, 0px);
+  --st-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --st-tap: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --st-fast: 1ms; --st-base: 1ms; }
+}
