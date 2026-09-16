@@ -357,12 +357,18 @@ test('every routine ends with the optional Aquaphor step', () => {
   }
 });
 
-test('the Aquaphor step names both choices and the option to skip', () => {
-  const state = stateAt(RESTART);
-  const last = getDailyRoutine(state, RESTART).pm.steps.slice(-1)[0];
-  assert.match(last.instruction, /spot/i);
-  assert.match(last.instruction, /whole face/i);
-  assert.match(last.instruction, /skip/i);
+test('the Aquaphor step names both choices and skipping, worded for the time of day', () => {
+  const routine = getDailyRoutine(stateAt(RESTART), RESTART);
+  for (const part of [routine.am, routine.pm]) {
+    const last = part.steps.slice(-1)[0];
+    assert.match(last.instruction, /spot/i);
+    assert.match(last.instruction, /whole face/i);
+    assert.match(last.instruction, /skip/i);
+  }
+  // A morning step never talks about tonight.
+  assert.match(routine.am.steps.slice(-1)[0].instruction, /skip it this morning/i);
+  assert.doesNotMatch(routine.am.steps.slice(-1)[0].instruction, /tonight/i);
+  assert.match(routine.pm.steps.slice(-1)[0].instruction, /skip it tonight/i);
 });
 
 test('Aquaphor never blocks a routine from completing', () => {

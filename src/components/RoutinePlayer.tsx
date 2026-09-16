@@ -59,7 +59,7 @@ export function RoutinePlayer({
     setIndex((i) => Math.min(steps.length, i + 1));
   }
 
-  /** Aquaphor is decided here, in the routine: spots, whole face, or not tonight. */
+  /** Aquaphor is decided here, in the routine: spots, whole face, or not this time. */
   function chooseAquaphor(choice: AquaphorChoice) {
     if (!step) return;
     const next = [...new Set([...completed, step.id])];
@@ -133,7 +133,7 @@ export function RoutinePlayer({
                               ? aquaphor === 'face'
                                 ? 'Whole face'
                                 : 'Spot treatment'
-                              : 'Not used tonight'
+                              : `Not used ${isNight ? 'tonight' : 'this morning'}`
                             : isDone
                               ? 'Completed'
                               : s.mandatory
@@ -217,7 +217,7 @@ export function RoutinePlayer({
                   </Button>
                 </div>
                 <Button variant="ghost" block iconAfter="forward" onClick={skipAquaphor}>
-                  Not tonight
+                  {isNight ? 'Not tonight' : 'Not this morning'}
                 </Button>
                 <div className="st-flex" style={{ justifyContent: 'space-between' }}>
                   <Button

@@ -200,7 +200,11 @@ export function buildDermaStampNight(state: AppState): RoutineTemplate {
  * whether on spots or the whole face — is decided in the routine itself, not
  * configured in advance, so the step is always offered and never required.
  */
-export function appendAquaphor(steps: RoutineStep[], state: AppState): RoutineStep[] {
+export function appendAquaphor(
+  steps: RoutineStep[],
+  state: AppState,
+  part: 'am' | 'pm',
+): RoutineStep[] {
   const product = state.products.find((p) => p.id === PRODUCT_IDS.aquaphor);
   if (product && !product.active) return steps;
   return [
@@ -209,7 +213,9 @@ export function appendAquaphor(steps: RoutineStep[], state: AppState): RoutineSt
       'aquaphor',
       productName(state.products, PRODUCT_IDS.aquaphor, 'Aquaphor'),
       'occlusive',
-      'Optional. Spot treatment on dry or flaking areas, a thin layer over the whole face, or skip it tonight.',
+      `Optional. Spot treatment on dry or flaking areas, a thin layer over the whole face, or skip it ${
+        part === 'am' ? 'this morning' : 'tonight'
+      }.`,
       false,
       PRODUCT_IDS.aquaphor,
     ),
@@ -374,7 +380,7 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
   const irritation = readIrritation(state, safeDate);
 
   const am = buildMorningRoutine(state);
-  const amSteps = appendAquaphor(am.steps, state);
+  const amSteps = appendAquaphor(am.steps, state, 'am');
   const mask = day.plan.maskId ? state.masks.find((m) => m.id === day.plan.maskId) : undefined;
 
   const isTretinoin = day.plan.kind === 'tretinoin';
@@ -385,7 +391,7 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
       ? buildTretinoinNight(state)
       : buildRecoveryNight(state, mask);
 
-  const pmSteps = appendAquaphor(pm.steps, state);
+  const pmSteps = appendAquaphor(pm.steps, state, 'pm');
 
   const notices: string[] = [];
   if (progression.paused && progression.pauseReason) {
