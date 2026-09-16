@@ -384,4 +384,35 @@ test('an inactive Aquaphor product is not scheduled', () => {
   assert.ok(!routine.pm.steps.some((s) => s.kind === 'occlusive'));
 });
 
+test('the double cleanse carries the same method on every night type', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'every_other_night';
+  });
+  const nights = [RESTART, addDays(RESTART, 1), addDays(RESTART, 2)].map((d) => getDailyRoutine(state, d));
+  assert.deepEqual(
+    [...new Set(nights.map((n) => n.pm.type))].sort(),
+    ['pm_derma_stamp', 'pm_recovery', 'pm_tretinoin'],
+    'all three night types are covered',
+  );
+
+  for (const night of nights) {
+    const [first, second] = night.pm.steps;
+    assert.equal(first.kind, 'cleanser');
+    assert.equal(second.kind, 'cleanser');
+    // First cleanse: timed on dry skin, then water worked in to exfoliate, then rinsed.
+    assert.match(first.instruction, /35-45 seconds/);
+    assert.match(first.instruction, /dry skin/i);
+    assert.match(first.instruction, /exfoliate/i);
+    assert.match(first.instruction, /rinse several times/i);
+    // Second cleanse goes on without drying off.
+    assert.match(second.instruction, /do not dry/i);
+    assert.match(second.instruction, /damp/i);
+  }
+
+  const firsts = new Set(nights.map((n) => n.pm.steps[0].instruction));
+  const seconds = new Set(nights.map((n) => n.pm.steps[1].instruction));
+  assert.equal(firsts.size, 1, 'one first-cleanse instruction everywhere');
+  assert.equal(seconds.size, 1, 'one second-cleanse instruction everywhere');
+});
+
 console.log(`SkinTec scheduler: ${passed} checks passed`);

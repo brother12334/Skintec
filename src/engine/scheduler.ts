@@ -88,6 +88,36 @@ export function buildMorningRoutine(state: AppState): RoutineTemplate {
 }
 
 /**
+ * The double cleanse, shared by every night routine so the method can never
+ * drift between them.
+ *
+ * First cleanse goes on dry skin for 35-45 seconds, then a little water is
+ * worked in to exfoliate before rinsing several times. The face is left damp:
+ * the second cleanse goes straight on without drying off first.
+ */
+function cleanseSteps(state: AppState, prefix: string): RoutineStep[] {
+  const { products } = state;
+  return [
+    step(
+      `${prefix}-1`,
+      productName(products, PRODUCT_IDS.anuaFirst, 'Anua First Cleanser'),
+      'cleanser',
+      'Massage into dry skin for 35-45 seconds. Then add a little water to your hands and rub it in to exfoliate. Rinse several times.',
+      true,
+      PRODUCT_IDS.anuaFirst,
+    ),
+    step(
+      `${prefix}-2`,
+      productName(products, PRODUCT_IDS.anuaSecond, 'Anua Second Cleanser'),
+      'cleanser',
+      'Do not dry your face. Go straight on to the second cleanse on damp skin, then rinse.',
+      true,
+      PRODUCT_IDS.anuaSecond,
+    ),
+  ];
+}
+
+/**
  * Tretinoin night — the moisturizer sandwich.
  * The closing moisturizer is mandatory by construction: it is not a toggle,
  * not conditional, and the routine cannot be completed without it.
@@ -98,8 +128,7 @@ export function buildTretinoinNight(state: AppState): RoutineTemplate {
     id: 'pm-tretinoin',
     type: 'pm_tretinoin',
     steps: [
-      step('pm-tret-1', productName(products, PRODUCT_IDS.anuaFirst, 'Anua First Cleanser'), 'cleanser', 'Massage over dry skin, then rinse.', true, PRODUCT_IDS.anuaFirst),
-      step('pm-tret-2', productName(products, PRODUCT_IDS.anuaSecond, 'Anua Second Cleanser'), 'cleanser', 'Follow with a gentle second cleanse and rinse.', true, PRODUCT_IDS.anuaSecond),
+      ...cleanseSteps(state, 'pm-tret'),
       step('pm-tret-3', 'Allow skin to dry completely', 'wait', 'Wait until skin is fully dry before the next step.', true),
       step('pm-tret-4', productName(products, PRODUCT_IDS.lrp, 'LRP Triple Repair'), 'moisturizer', 'First layer of the sandwich — a thin, even layer.', true, PRODUCT_IDS.lrp),
       step('pm-tret-5', productName(products, PRODUCT_IDS.tretinoin, 'Tretinoin'), 'tretinoin', 'Apply the amount your prescriber directed.', true, PRODUCT_IDS.tretinoin),
@@ -111,8 +140,7 @@ export function buildTretinoinNight(state: AppState): RoutineTemplate {
 export function buildRecoveryNight(state: AppState, mask?: Mask): RoutineTemplate {
   const { products, settings } = state;
   const steps: RoutineStep[] = [
-    step('pm-rec-1', productName(products, PRODUCT_IDS.anuaFirst, 'Anua First Cleanser'), 'cleanser', 'Massage over dry skin, then rinse.', true, PRODUCT_IDS.anuaFirst),
-    step('pm-rec-2', productName(products, PRODUCT_IDS.anuaSecond, 'Anua Second Cleanser'), 'cleanser', 'Follow with a gentle second cleanse and rinse.', true, PRODUCT_IDS.anuaSecond),
+    ...cleanseSteps(state, 'pm-rec'),
   ];
 
   if (mask) {
@@ -159,8 +187,7 @@ export function buildDermaStampNight(state: AppState): RoutineTemplate {
     id: 'pm-derma-stamp',
     type: 'pm_derma_stamp',
     steps: [
-      step('pm-ds-1', productName(products, PRODUCT_IDS.anuaFirst, 'Anua First Cleanser'), 'cleanser', 'Massage over dry skin, then rinse.', true, PRODUCT_IDS.anuaFirst),
-      step('pm-ds-2', productName(products, PRODUCT_IDS.anuaSecond, 'Anua Second Cleanser'), 'cleanser', 'Follow with a gentle second cleanse and rinse.', true, PRODUCT_IDS.anuaSecond),
+      ...cleanseSteps(state, 'pm-ds'),
       step('pm-ds-3', 'Allow skin to dry completely', 'wait', 'Wait until skin is fully dry before stamping.', true),
       step('pm-ds-4', productName(products, PRODUCT_IDS.dermaStamp, 'Derma Stamp'), 'derma_stamp', 'Work in sections as directed. Use a clean, disinfected stamp.', true, PRODUCT_IDS.dermaStamp),
       step('pm-ds-5', productName(products, PRODUCT_IDS.arganOil, 'Argan Oil'), 'oil', 'Apply immediately after stamping, while skin is still bare.', true, PRODUCT_IDS.arganOil),
