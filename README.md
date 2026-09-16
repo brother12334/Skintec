@@ -23,6 +23,8 @@ keeps recovery nights real, and places masks only where they are compatible.
 - **Mask compatibility** — the Alaskan Volcano Mask never lands on a treatment night, Volcano and
   LaserDerm never stack, and a mask whose preferred day is a treatment night moves to the nearest
   suitable recovery night.
+- **Aquaphor** — an optional closing step for the morning, the night, or both, as a spot treatment
+  or over the whole face. It is always last and never required, so a routine still completes without it.
 - **Retinol compatibility** — retinol is never scheduled alongside tretinoin.
 - **Day and night** — Today shows only the routine that is current, with the other one tap away,
   and the whole app switches to a dark theme from 6pm (overridable in Settings → Appearance).
@@ -54,7 +56,7 @@ Progression stages are configuration (`TretinoinProgressionStage[]`), not hard-c
 ```bash
 npm install
 npm run dev        # local dev server
-npm test           # scheduling-engine checks (24)
+npm test           # scheduling-engine checks (29)
 npm run build      # typecheck + production build
 npm run preview    # serve the production build
 ```

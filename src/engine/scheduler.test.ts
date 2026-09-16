@@ -329,4 +329,59 @@ test('turning the derma stamp off restores the plain pattern', () => {
   assert.ok(!plan.days.some((d) => d.plan.kind === 'derma_stamp'));
 });
 
+test('Aquaphor is off by default', () => {
+  const state = stateAt(RESTART);
+  const routine = getDailyRoutine(state, RESTART);
+  assert.ok(![...routine.am.steps, ...routine.pm.steps].some((s) => s.kind === 'occlusive'));
+});
+
+test('Aquaphor closes both routines when switched on, and stays optional', () => {
+  for (const mode of ['spot', 'face'] as const) {
+    const state = stateAt(RESTART, (s) => {
+      s.settings.aquaphorMorning = mode;
+      s.settings.aquaphorNight = mode;
+    });
+    for (const date of [RESTART, addDays(RESTART, 1), addDays(RESTART, 2)]) {
+      const routine = getDailyRoutine(state, date);
+      for (const part of [routine.am, routine.pm]) {
+        const last = part.steps[part.steps.length - 1];
+        assert.equal(last.kind, 'occlusive', `${date} ${part.type}`);
+        assert.equal(last.productId, 'aquaphor');
+        assert.equal(last.mandatory, false, 'Aquaphor is never required');
+        // Everything the routine actually requires still comes before it.
+        assert.ok(part.steps.slice(0, -1).every((s) => s.mandatory || s.kind === 'retinol'));
+      }
+    }
+  }
+});
+
+test('Aquaphor can be set for only one part of the day', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.aquaphorNight = 'face';
+  });
+  const routine = getDailyRoutine(state, RESTART);
+  assert.ok(!routine.am.steps.some((s) => s.kind === 'occlusive'));
+  assert.equal(routine.pm.steps[routine.pm.steps.length - 1].kind, 'occlusive');
+});
+
+test('the tretinoin sandwich still closes on the mandatory moisturizer under Aquaphor', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.aquaphorNight = 'face';
+  });
+  const routine = getDailyRoutine(state, RESTART);
+  assert.equal(routine.pm.type, 'pm_tretinoin');
+  const mandatory = routine.pm.steps.filter((s) => s.mandatory);
+  assert.equal(mandatory.length, 6);
+  assert.equal(mandatory[mandatory.length - 1].kind, 'moisturizer');
+});
+
+test('an inactive Aquaphor product is not scheduled', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.settings.aquaphorNight = 'spot';
+    s.products = s.products.map((p) => (p.id === 'aquaphor' ? { ...p, active: false } : p));
+  });
+  const routine = getDailyRoutine(state, RESTART);
+  assert.ok(!routine.pm.steps.some((s) => s.kind === 'occlusive'));
+});
+
 console.log(`SkinTec scheduler: ${passed} checks passed`);

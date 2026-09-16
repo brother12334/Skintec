@@ -1,5 +1,6 @@
 import type {
   AppState,
+  AquaphorMode,
   DailyRoutine,
   Mask,
   NightPlan,
@@ -168,6 +169,31 @@ export function buildDermaStampNight(state: AppState): RoutineTemplate {
   };
 }
 
+/**
+ * Aquaphor closes a routine when the user wants it. It is always appended last
+ * and always optional, so a routine still completes without it — including the
+ * tretinoin sandwich, whose mandatory closing moisturizer stays the final
+ * required step.
+ */
+export function appendAquaphor(steps: RoutineStep[], mode: AquaphorMode, state: AppState): RoutineStep[] {
+  if (mode === 'off') return steps;
+  const product = state.products.find((p) => p.id === PRODUCT_IDS.aquaphor);
+  if (product && !product.active) return steps;
+  return [
+    ...steps,
+    step(
+      `aquaphor-${mode}`,
+      productName(state.products, PRODUCT_IDS.aquaphor, 'Aquaphor'),
+      'occlusive',
+      mode === 'spot'
+        ? 'Optional. Dab a little on dry or flaking spots only.'
+        : 'Optional. A thin layer over the whole face to seal everything in.',
+      false,
+      PRODUCT_IDS.aquaphor,
+    ),
+  ];
+}
+
 /* ------------------------------------------------------------------ *
  * Tretinoin night pattern
  * ------------------------------------------------------------------ */
@@ -326,6 +352,7 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
   const irritation = readIrritation(state, safeDate);
 
   const am = buildMorningRoutine(state);
+  const amSteps = appendAquaphor(am.steps, state.settings.aquaphorMorning, state);
   const mask = day.plan.maskId ? state.masks.find((m) => m.id === day.plan.maskId) : undefined;
 
   const isTretinoin = day.plan.kind === 'tretinoin';
@@ -335,6 +362,8 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
     : isTretinoin
       ? buildTretinoinNight(state)
       : buildRecoveryNight(state, mask);
+
+  const pmSteps = appendAquaphor(pm.steps, state.settings.aquaphorNight, state);
 
   const notices: string[] = [];
   if (progression.paused && progression.pauseReason) {
@@ -371,8 +400,8 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
     am: {
       type: am.type,
       title: state.settings.morningMode === 'skin_aqua' ? 'Skin Aqua morning' : 'Standard morning',
-      subtitle: am.steps.map((s) => s.name).join(' → '),
-      steps: am.steps,
+      subtitle: amSteps.map((s) => s.name).join(' → '),
+      steps: amSteps,
     },
     pm: {
       type: pm.type,
@@ -380,8 +409,8 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
       subtitle:
         mask && !isTretinoin && !isDermaStamp
           ? `Recovery with ${mask.name}`
-          : pm.steps.map((s) => s.name).join(' → '),
-      steps: pm.steps,
+          : pmSteps.map((s) => s.name).join(' → '),
+      steps: pmSteps,
       maskId: mask?.id,
       maskName: mask?.name,
       maskMovedFrom: day.plan.maskMovedFrom,

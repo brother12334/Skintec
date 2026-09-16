@@ -40,6 +40,7 @@ export type RoutineStepKind =
   | 'serum'
   | 'derma_stamp'
   | 'oil'
+  | 'occlusive'
   | 'wait';
 
 export type RoutineStep = {
@@ -129,6 +130,9 @@ export type MorningMode = 'standard' | 'skin_aqua';
 /** 'auto' follows the device clock: bright by day, dark after dark. */
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
+/** Aquaphor closes a routine when you want it — on spots only, or over the whole face. */
+export type AquaphorMode = 'off' | 'spot' | 'face';
+
 export type NotificationSettings = {
   morningReminder: boolean;
   morningTime: string;
@@ -144,6 +148,8 @@ export type Settings = {
   restartDate: string;
   prescriberNotes: string;
   retinolActive: boolean;
+  aquaphorMorning: AquaphorMode;
+  aquaphorNight: AquaphorMode;
   dermaStampActive: boolean;
   /** Weekday key ('mon'…'sun') the derma stamp is scheduled on. */
   dermaStampDay: string;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import type { ThemeMode, TretinoinFrequency } from '../types';
+import type { AquaphorMode, ThemeMode, TretinoinFrequency } from '../types';
 import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
 import { WEEKDAY_KEYS, WEEKDAY_LABELS, isValidISO } from '../engine/dates';
 import { effectiveProgression } from '../engine/progression';
@@ -212,6 +212,64 @@ export function SettingsScreen({ today }: { today: string }) {
             }}
           />
         </SettingRow>
+      </section>
+
+      {/* ---------------- Aquaphor ---------------- */}
+      <section className="st-card st-mt-4">
+        <div className="st-flex-between">
+          <h2 className="st-section-title" style={{ margin: 0 }}>
+            Aquaphor
+          </h2>
+          <SkinTecIcon name="occlusive" size={22} />
+        </div>
+        <p className="st-xs st-muted st-mt-2">
+          An optional last step. Add it to your morning, your night, or both — it never blocks a routine
+          from being finished.
+        </p>
+
+        <div className="st-field st-mt-4">
+          <span className="st-label">Morning</span>
+          <Segmented<AquaphorMode>
+            label="Aquaphor in the morning"
+            value={state.settings.aquaphorMorning}
+            onChange={(mode) => {
+              updateSettings({ aquaphorMorning: mode });
+              toast(
+                mode === 'off'
+                  ? 'Aquaphor off in the morning'
+                  : `Morning Aquaphor: ${mode === 'spot' ? 'spot treatment' : 'whole face'}`,
+                'occlusive',
+              );
+            }}
+            options={[
+              { value: 'off', label: 'Off' },
+              { value: 'spot', label: 'Spots' },
+              { value: 'face', label: 'Whole face' },
+            ]}
+          />
+        </div>
+
+        <div className="st-field">
+          <span className="st-label">Night</span>
+          <Segmented<AquaphorMode>
+            label="Aquaphor at night"
+            value={state.settings.aquaphorNight}
+            onChange={(mode) => {
+              updateSettings({ aquaphorNight: mode });
+              toast(
+                mode === 'off'
+                  ? 'Aquaphor off at night'
+                  : `Night Aquaphor: ${mode === 'spot' ? 'spot treatment' : 'whole face'}`,
+                'occlusive',
+              );
+            }}
+            options={[
+              { value: 'off', label: 'Off' },
+              { value: 'spot', label: 'Spots' },
+              { value: 'face', label: 'Whole face' },
+            ]}
+          />
+        </div>
       </section>
 
       {/* ---------------- Derma stamp ---------------- */}

@@ -15,6 +15,7 @@ export type SkinTecIconName =
   | 'retinol'
   | 'dermastamp'
   | 'oil'
+  | 'occlusive'
   | 'mask'
   | 'recovery'
   | 'sunscreen'
@@ -94,6 +95,13 @@ const paths: Record<SkinTecIconName, JSX.Element> = {
     <>
       <path d="M10.4 3.8h3.2v2.6l2.2 2.8a4 4 0 0 1 .9 2.5v5.7a2.8 2.8 0 0 1-2.8 2.8h-3.8a2.8 2.8 0 0 1-2.8-2.8v-5.7a4 4 0 0 1 .9-2.5l2.2-2.8Z" />
       <path d="M12 12.2c1.3 1.5 2 2.5 2 3.4a2 2 0 1 1-4 0c0-.9.7-1.9 2-3.4Z" />
+    </>
+  ),
+  occlusive: (
+    <>
+      <path d="M5.4 8.6h13.2a1.8 1.8 0 0 1 1.8 1.8v6.4a3 3 0 0 1-3 3H6.6a3 3 0 0 1-3-3v-6.4a1.8 1.8 0 0 1 1.8-1.8Z" />
+      <path d="M7.6 8.6V6.9a2.6 2.6 0 0 1 2.6-2.6h3.6a2.6 2.6 0 0 1 2.6 2.6v1.7" />
+      <path d="M12 11.6c1.4 1.7 2.1 2.8 2.1 3.7a2.1 2.1 0 1 1-4.2 0c0-.9.7-2 2.1-3.7Z" />
     </>
   ),
   mask: (
@@ -259,6 +267,7 @@ export const STEP_ICON: Record<string, SkinTecIconName> = {
   cleanser: 'cleanser',
   derma_stamp: 'dermastamp',
   oil: 'oil',
+  occlusive: 'occlusive',
   moisturizer: 'moisturizer',
   tretinoin: 'tretinoin',
   retinol: 'retinol',
