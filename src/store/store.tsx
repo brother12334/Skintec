@@ -65,9 +65,6 @@ export function hydrate(raw: unknown): { state: AppState; recovered: boolean } {
       ...base.settings,
       ...s,
       morningMode: s.morningMode === 'skin_aqua' ? 'skin_aqua' : 'standard',
-      aquaphorMorning:
-        s.aquaphorMorning === 'spot' || s.aquaphorMorning === 'face' ? s.aquaphorMorning : 'off',
-      aquaphorNight: s.aquaphorNight === 'spot' || s.aquaphorNight === 'face' ? s.aquaphorNight : 'off',
       themeMode:
         s.themeMode === 'light' || s.themeMode === 'dark' || s.themeMode === 'auto'
           ? s.themeMode

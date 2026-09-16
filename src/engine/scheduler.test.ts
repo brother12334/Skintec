@@ -114,28 +114,39 @@ test('tretinoin night is the six-step moisturizer sandwich, closing on moisturiz
   const state = stateAt(RESTART);
   const routine = getDailyRoutine(state, RESTART);
   assert.equal(routine.pm.type, 'pm_tretinoin');
-  assert.equal(routine.pm.steps.length, 6);
+
+  // The sandwich is exactly the required work; only optional Aquaphor follows it.
+  const required = routine.pm.steps.filter((s) => s.mandatory);
+  assert.equal(required.length, 6);
   assert.deepEqual(
-    routine.pm.steps.map((s) => s.kind),
+    required.map((s) => s.kind),
     ['cleanser', 'cleanser', 'wait', 'moisturizer', 'tretinoin', 'moisturizer'],
   );
-  assert.ok(routine.pm.steps.every((s) => s.mandatory), 'every tretinoin step is mandatory');
-  const last = routine.pm.steps[routine.pm.steps.length - 1];
+  const last = required[required.length - 1];
   assert.equal(last.kind, 'moisturizer');
   assert.equal(last.mandatory, true);
+  assert.deepEqual(
+    routine.pm.steps.filter((s) => !s.mandatory).map((s) => s.kind),
+    ['occlusive'],
+  );
 });
 
 test('morning modes stay exactly as configured', () => {
+  // Only the required steps define the morning; optional Aquaphor is offered after both.
   const standard = stateAt(RESTART);
   const am = getDailyRoutine(standard, RESTART).am;
-  assert.deepEqual(am.steps.map((s) => s.kind), ['moisturizer', 'sunscreen']);
+  assert.deepEqual(
+    am.steps.filter((s) => s.mandatory).map((s) => s.kind),
+    ['moisturizer', 'sunscreen'],
+  );
 
   const aqua = stateAt(RESTART, (s) => {
     s.settings.morningMode = 'skin_aqua';
   });
   const aquaAm = getDailyRoutine(aqua, RESTART).am;
-  assert.equal(aquaAm.steps.length, 1);
-  assert.equal(aquaAm.steps[0].productId, 'skin-aqua-uv-serum');
+  const aquaRequired = aquaAm.steps.filter((s) => s.mandatory);
+  assert.equal(aquaRequired.length, 1);
+  assert.equal(aquaRequired[0].productId, 'skin-aqua-uv-serum');
 
   // Collagen Bank is in the library but never inserted automatically.
   for (const state of [standard, aqua]) {
@@ -263,15 +274,16 @@ test('derma stamp night is cleanse, cleanse, dry, stamp, argan oil, moisturizer'
   const wednesday = addDays(RESTART, 2);
   const routine = getDailyRoutine(state, wednesday);
   assert.equal(routine.pm.type, 'pm_derma_stamp');
+  const required = routine.pm.steps.filter((s) => s.mandatory);
   assert.deepEqual(
-    routine.pm.steps.map((s) => s.kind),
+    required.map((s) => s.kind),
     ['cleanser', 'cleanser', 'wait', 'derma_stamp', 'oil', 'moisturizer'],
   );
   // Argan oil sits immediately after the stamp, and neither step is optional.
   const stampAt = routine.pm.steps.findIndex((s) => s.kind === 'derma_stamp');
   assert.equal(routine.pm.steps[stampAt + 1].kind, 'oil');
   assert.equal(routine.pm.steps[stampAt + 1].productId, 'argan-oil');
-  assert.ok(routine.pm.steps.every((s) => s.mandatory));
+  assert.equal(routine.pm.steps[stampAt + 1].mandatory, true);
 });
 
 test('tretinoin, retinol and masks never share the derma stamp night', () => {
@@ -329,59 +341,49 @@ test('turning the derma stamp off restores the plain pattern', () => {
   assert.ok(!plan.days.some((d) => d.plan.kind === 'derma_stamp'));
 });
 
-test('Aquaphor is off by default', () => {
-  const state = stateAt(RESTART);
-  const routine = getDailyRoutine(state, RESTART);
-  assert.ok(![...routine.am.steps, ...routine.pm.steps].some((s) => s.kind === 'occlusive'));
-});
-
-test('Aquaphor closes both routines when switched on, and stays optional', () => {
-  for (const mode of ['spot', 'face'] as const) {
-    const state = stateAt(RESTART, (s) => {
-      s.settings.aquaphorMorning = mode;
-      s.settings.aquaphorNight = mode;
-    });
-    for (const date of [RESTART, addDays(RESTART, 1), addDays(RESTART, 2)]) {
-      const routine = getDailyRoutine(state, date);
-      for (const part of [routine.am, routine.pm]) {
-        const last = part.steps[part.steps.length - 1];
-        assert.equal(last.kind, 'occlusive', `${date} ${part.type}`);
-        assert.equal(last.productId, 'aquaphor');
-        assert.equal(last.mandatory, false, 'Aquaphor is never required');
-        // Everything the routine actually requires still comes before it.
-        assert.ok(part.steps.slice(0, -1).every((s) => s.mandatory || s.kind === 'retinol'));
-      }
+test('every routine ends with the optional Aquaphor step', () => {
+  const state = stateAt(RESTART, (s) => {
+    s.progression.approvedMaxFrequency = 'every_other_night';
+  });
+  for (const date of [RESTART, addDays(RESTART, 1), addDays(RESTART, 2)]) {
+    const routine = getDailyRoutine(state, date);
+    for (const part of [routine.am, routine.pm]) {
+      const last = part.steps[part.steps.length - 1];
+      assert.equal(last.kind, 'occlusive', `${date} ${part.type}`);
+      assert.equal(last.id, 'aquaphor');
+      assert.equal(last.productId, 'aquaphor');
+      assert.equal(last.mandatory, false, 'Aquaphor is never required');
     }
   }
 });
 
-test('Aquaphor can be set for only one part of the day', () => {
-  const state = stateAt(RESTART, (s) => {
-    s.settings.aquaphorNight = 'face';
-  });
-  const routine = getDailyRoutine(state, RESTART);
-  assert.ok(!routine.am.steps.some((s) => s.kind === 'occlusive'));
-  assert.equal(routine.pm.steps[routine.pm.steps.length - 1].kind, 'occlusive');
+test('the Aquaphor step names both choices and the option to skip', () => {
+  const state = stateAt(RESTART);
+  const last = getDailyRoutine(state, RESTART).pm.steps.slice(-1)[0];
+  assert.match(last.instruction, /spot/i);
+  assert.match(last.instruction, /whole face/i);
+  assert.match(last.instruction, /skip/i);
 });
 
-test('the tretinoin sandwich still closes on the mandatory moisturizer under Aquaphor', () => {
+test('Aquaphor never blocks a routine from completing', () => {
   const state = stateAt(RESTART, (s) => {
-    s.settings.aquaphorNight = 'face';
+    s.settings.morningMode = 'skin_aqua';
   });
   const routine = getDailyRoutine(state, RESTART);
+  // The required work is everything except the Aquaphor step.
   assert.equal(routine.pm.type, 'pm_tretinoin');
   const mandatory = routine.pm.steps.filter((s) => s.mandatory);
   assert.equal(mandatory.length, 6);
   assert.equal(mandatory[mandatory.length - 1].kind, 'moisturizer');
+  assert.ok(!routine.am.steps.filter((s) => s.mandatory).some((s) => s.kind === 'occlusive'));
 });
 
-test('an inactive Aquaphor product is not scheduled', () => {
+test('an inactive Aquaphor product removes the step', () => {
   const state = stateAt(RESTART, (s) => {
-    s.settings.aquaphorNight = 'spot';
     s.products = s.products.map((p) => (p.id === 'aquaphor' ? { ...p, active: false } : p));
   });
   const routine = getDailyRoutine(state, RESTART);
-  assert.ok(!routine.pm.steps.some((s) => s.kind === 'occlusive'));
+  assert.ok(![...routine.am.steps, ...routine.pm.steps].some((s) => s.kind === 'occlusive'));
 });
 
 test('the double cleanse carries the same method on every night type', () => {

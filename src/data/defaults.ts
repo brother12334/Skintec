@@ -38,7 +38,7 @@ export const defaultProducts: Product[] = [
   { id: PRODUCT_IDS.skinAqua, name: 'Skin Aqua UV Serum', category: 'sunscreen', notes: 'Used alone in Skin Aqua mornings.', active: true, builtIn: true },
   { id: PRODUCT_IDS.dermaStamp, name: 'Derma Stamp', category: 'treatment', notes: 'Weekly. Never on a tretinoin night — SkinTec keeps them apart.', active: true, builtIn: true },
   { id: PRODUCT_IDS.arganOil, name: 'Argan Oil', category: 'other', notes: 'Applied immediately after the derma stamp.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.aquaphor, name: 'Aquaphor', category: 'other', notes: 'Optional final step. Spot treatment or whole face, morning and night.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.aquaphor, name: 'Aquaphor', category: 'other', notes: 'Optional last step. You choose spot treatment or whole face while doing the routine.', active: true, builtIn: true },
 ];
 
 export const defaultTreatments: Treatment[] = [
@@ -111,8 +111,6 @@ export const defaultSettings: Settings = {
   restartDate: todayISO(),
   prescriberNotes: '',
   retinolActive: false,
-  aquaphorMorning: 'off',
-  aquaphorNight: 'off',
   dermaStampActive: true,
   dermaStampDay: 'wed',
   notifications: {

@@ -23,8 +23,9 @@ keeps recovery nights real, and places masks only where they are compatible.
 - **Mask compatibility** — the Alaskan Volcano Mask never lands on a treatment night, Volcano and
   LaserDerm never stack, and a mask whose preferred day is a treatment night moves to the nearest
   suitable recovery night.
-- **Aquaphor** — an optional closing step for the morning, the night, or both, as a spot treatment
-  or over the whole face. It is always last and never required, so a routine still completes without it.
+- **Aquaphor** — offered as the last step of every routine, where you decide in the moment: spots
+  only, whole face, or not tonight. It is never required, so a routine completes either way, and
+  your choice is recorded with that routine.
 - **Retinol compatibility** — retinol is never scheduled alongside tretinoin.
 - **Day and night** — Today shows only the routine that is current, with the other one tap away,
   and the whole app switches to a dark theme from 6pm (overridable in Settings → Appearance).

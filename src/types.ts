@@ -112,6 +112,8 @@ export type RoutineCompletion = {
   routineType: RoutineType;
   completedSteps: string[];
   completedAt?: string;
+  /** What was chosen at the Aquaphor step, when it was used. */
+  aquaphor?: AquaphorChoice;
 };
 
 export type SkinComfort = 'comfortable' | 'a_little_dry' | 'irritated' | 'very_irritated';
@@ -131,7 +133,7 @@ export type MorningMode = 'standard' | 'skin_aqua';
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
 /** Aquaphor closes a routine when you want it — on spots only, or over the whole face. */
-export type AquaphorMode = 'off' | 'spot' | 'face';
+export type AquaphorChoice = 'spot' | 'face';
 
 export type NotificationSettings = {
   morningReminder: boolean;
@@ -148,8 +150,6 @@ export type Settings = {
   restartDate: string;
   prescriberNotes: string;
   retinolActive: boolean;
-  aquaphorMorning: AquaphorMode;
-  aquaphorNight: AquaphorMode;
   dermaStampActive: boolean;
   /** Weekday key ('mon'…'sun') the derma stamp is scheduled on. */
   dermaStampDay: string;

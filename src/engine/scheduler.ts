@@ -1,6 +1,5 @@
 import type {
   AppState,
-  AquaphorMode,
   DailyRoutine,
   Mask,
   NightPlan,
@@ -197,24 +196,20 @@ export function buildDermaStampNight(state: AppState): RoutineTemplate {
 }
 
 /**
- * Aquaphor closes a routine when the user wants it. It is always appended last
- * and always optional, so a routine still completes without it — including the
- * tretinoin sandwich, whose mandatory closing moisturizer stays the final
- * required step.
+ * Aquaphor closes every routine as an optional step. Whether to use it — and
+ * whether on spots or the whole face — is decided in the routine itself, not
+ * configured in advance, so the step is always offered and never required.
  */
-export function appendAquaphor(steps: RoutineStep[], mode: AquaphorMode, state: AppState): RoutineStep[] {
-  if (mode === 'off') return steps;
+export function appendAquaphor(steps: RoutineStep[], state: AppState): RoutineStep[] {
   const product = state.products.find((p) => p.id === PRODUCT_IDS.aquaphor);
   if (product && !product.active) return steps;
   return [
     ...steps,
     step(
-      `aquaphor-${mode}`,
+      'aquaphor',
       productName(state.products, PRODUCT_IDS.aquaphor, 'Aquaphor'),
       'occlusive',
-      mode === 'spot'
-        ? 'Optional. Dab a little on dry or flaking spots only.'
-        : 'Optional. A thin layer over the whole face to seal everything in.',
+      'Optional. Spot treatment on dry or flaking areas, a thin layer over the whole face, or skip it tonight.',
       false,
       PRODUCT_IDS.aquaphor,
     ),
@@ -379,7 +374,7 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
   const irritation = readIrritation(state, safeDate);
 
   const am = buildMorningRoutine(state);
-  const amSteps = appendAquaphor(am.steps, state.settings.aquaphorMorning, state);
+  const amSteps = appendAquaphor(am.steps, state);
   const mask = day.plan.maskId ? state.masks.find((m) => m.id === day.plan.maskId) : undefined;
 
   const isTretinoin = day.plan.kind === 'tretinoin';
@@ -390,7 +385,7 @@ export function getDailyRoutine(state: AppState, date: string): DailyRoutine {
       ? buildTretinoinNight(state)
       : buildRecoveryNight(state, mask);
 
-  const pmSteps = appendAquaphor(pm.steps, state.settings.aquaphorNight, state);
+  const pmSteps = appendAquaphor(pm.steps, state);
 
   const notices: string[] = [];
   if (progression.paused && progression.pauseReason) {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { RoutineStep, RoutineType } from '../types';
+import type { AquaphorChoice, RoutineStep, RoutineType } from '../types';
 import { SkinTecIcon, STEP_ICON } from '../icons/SkinTecIcon';
 import { Button, IconButton, ProgressBar } from './ui';
 
@@ -10,7 +10,8 @@ type Props = {
   routine: 'am' | 'pm';
   routineType: RoutineType;
   initialCompleted: string[];
-  onSave: (completedSteps: string[], finished: boolean) => void;
+  initialAquaphor?: AquaphorChoice;
+  onSave: (completedSteps: string[], finished: boolean, aquaphor?: AquaphorChoice) => void;
   onClose: () => void;
 };
 
@@ -20,6 +21,7 @@ export function RoutinePlayer({
   steps,
   routine,
   initialCompleted,
+  initialAquaphor,
   onSave,
   onClose,
 }: Props) {
@@ -27,6 +29,7 @@ export function RoutinePlayer({
   const [completed, setCompleted] = useState<string[]>(
     initialCompleted.filter((id) => steps.some((s) => s.id === id)),
   );
+  const [aquaphor, setAquaphor] = useState<AquaphorChoice | undefined>(initialAquaphor);
   const [index, setIndex] = useState(() => {
     const first = steps.findIndex((s) => !initialCompleted.includes(s.id));
     return first === -1 ? steps.length : first;
@@ -41,7 +44,9 @@ export function RoutinePlayer({
   function toggle(id: string, next: boolean) {
     setCompleted((prev) => {
       const set = next ? [...new Set([...prev, id])] : prev.filter((s) => s !== id);
-      onSave(set, false);
+      const choice = id === 'aquaphor' && !next ? undefined : aquaphor;
+      if (id === 'aquaphor' && !next) setAquaphor(undefined);
+      onSave(set, false, choice);
       return set;
     });
   }
@@ -50,7 +55,26 @@ export function RoutinePlayer({
     if (!step) return;
     const next = [...new Set([...completed, step.id])];
     setCompleted(next);
-    onSave(next, false);
+    onSave(next, false, aquaphor);
+    setIndex((i) => Math.min(steps.length, i + 1));
+  }
+
+  /** Aquaphor is decided here, in the routine: spots, whole face, or not tonight. */
+  function chooseAquaphor(choice: AquaphorChoice) {
+    if (!step) return;
+    const next = [...new Set([...completed, step.id])];
+    setAquaphor(choice);
+    setCompleted(next);
+    onSave(next, false, choice);
+    setIndex((i) => Math.min(steps.length, i + 1));
+  }
+
+  function skipAquaphor() {
+    if (!step) return;
+    const next = completed.filter((id) => id !== step.id);
+    setAquaphor(undefined);
+    setCompleted(next);
+    onSave(next, false, undefined);
     setIndex((i) => Math.min(steps.length, i + 1));
   }
 
@@ -104,7 +128,17 @@ export function RoutinePlayer({
                       <span className="st-day-main">
                         <span className="st-day-title">{s.name}</span>
                         <span className="st-day-sub">
-                          {isDone ? 'Completed' : s.mandatory ? 'Required' : 'Optional'}
+                          {s.kind === 'occlusive'
+                            ? isDone
+                              ? aquaphor === 'face'
+                                ? 'Whole face'
+                                : 'Spot treatment'
+                              : 'Not used tonight'
+                            : isDone
+                              ? 'Completed'
+                              : s.mandatory
+                                ? 'Required'
+                                : 'Optional'}
                         </span>
                       </span>
                       <SkinTecIcon name="forward" size={18} />
@@ -153,7 +187,7 @@ export function RoutinePlayer({
                 block
                 icon="completion"
                 disabled={!allMandatoryDone}
-                onClick={() => onSave(completed, true)}
+                onClick={() => onSave(completed, true, aquaphor)}
               >
                 {allMandatoryDone ? 'Finish routine' : 'Complete required steps first'}
               </Button>
@@ -162,6 +196,42 @@ export function RoutinePlayer({
               </Button>
             </>
           ) : (
+            step!.kind === 'occlusive' ? (
+              <>
+                <div className="st-grid-2">
+                  <Button
+                    variant={aquaphor === 'spot' ? (isNight ? 'night' : 'primary') : 'secondary'}
+                    block
+                    icon="occlusive"
+                    onClick={() => chooseAquaphor('spot')}
+                  >
+                    Spots only
+                  </Button>
+                  <Button
+                    variant={aquaphor === 'face' ? (isNight ? 'night' : 'primary') : 'secondary'}
+                    block
+                    icon="occlusive"
+                    onClick={() => chooseAquaphor('face')}
+                  >
+                    Whole face
+                  </Button>
+                </div>
+                <Button variant="ghost" block iconAfter="forward" onClick={skipAquaphor}>
+                  Not tonight
+                </Button>
+                <div className="st-flex" style={{ justifyContent: 'space-between' }}>
+                  <Button
+                    variant="ghost"
+                    icon="back"
+                    small
+                    onClick={() => setIndex((i) => Math.max(0, i - 1))}
+                    disabled={index === 0}
+                  >
+                    Back
+                  </Button>
+                </div>
+              </>
+            ) : (
             <>
               <Button
                 variant={isNight ? 'night' : 'primary'}
@@ -185,6 +255,7 @@ export function RoutinePlayer({
                 </Button>
               </div>
             </>
+            )
           )}
         </div>
       </footer>

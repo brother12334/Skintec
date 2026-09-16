@@ -5,6 +5,7 @@ import { effectiveProgression, restartWeek } from '../engine/progression';
 import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
 import { formatLongDate, formatShortDate } from '../engine/dates';
 import { dayPart } from '../engine/daypart';
+import type { AquaphorChoice } from '../types';
 import { SkinTecIcon } from '../icons/SkinTecIcon';
 import { Badge, Button, Notice, ProgressRing, useToast } from '../components/ui';
 import { MorningChooser } from '../components/MorningChooser';
@@ -37,7 +38,12 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
 
   const cards: ('am' | 'pm')[] = showOther ? [part, other] : [part];
 
-  function save(routineKind: 'am' | 'pm', steps: string[], finished: boolean) {
+  function save(
+    routineKind: 'am' | 'pm',
+    steps: string[],
+    finished: boolean,
+    aquaphor?: AquaphorChoice,
+  ) {
     const target = routineKind === 'am' ? routine.am : routine.pm;
     setCompletion({
       date: today,
@@ -45,6 +51,7 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
       routineType: target.type,
       completedSteps: steps,
       completedAt: finished ? new Date().toISOString() : undefined,
+      aquaphor,
     });
     if (finished) {
       setPlayer(null);
@@ -269,7 +276,8 @@ export function TodayScreen({ today, hour }: { today: string; hour: number }) {
           routine={player}
           routineType={player === 'am' ? routine.am.type : routine.pm.type}
           initialCompleted={(player === 'am' ? amDone : pmDone)?.completedSteps ?? []}
-          onSave={(steps, finished) => save(player, steps, finished)}
+          initialAquaphor={(player === 'am' ? amDone : pmDone)?.aquaphor}
+          onSave={(steps, finished, aquaphor) => save(player, steps, finished, aquaphor)}
           onClose={() => setPlayer(null)}
         />
       ) : null}
