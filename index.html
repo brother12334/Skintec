@@ -6,6 +6,7 @@
     <title>SkinTec — Skincare Routine Companion</title>
     <meta name="description" content="SkinTec is a bright, intelligent skincare routine companion that plans your mornings, nights, tretinoin progression and recovery for you." />
     <meta name="theme-color" content="#FFFBF2" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131219" />
     <link rel="manifest" href="/Skintec/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/Skintec/icons/skintec-mark.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/Skintec/icons/icon-192.png" />
@@ -18,6 +19,35 @@
     <meta name="apple-mobile-web-app-title" content="SkinTec" />
     <meta name="application-name" content="SkinTec" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <script>
+      /*
+       * Paint in the right theme from the very first frame. React sets this too,
+       * but not until it has mounted — until then the status bar strip and the
+       * launch screen would show the day palette at night.
+       *
+       * Mirrors resolveTheme() in src/engine/daypart.ts.
+       */
+      (function () {
+        var DAY_START = 5;
+        var NIGHT_START = 18;
+        var mode = 'auto';
+        try {
+          var saved = localStorage.getItem('skintec.state.v1');
+          if (saved) {
+            var themeMode = JSON.parse(saved).settings.themeMode;
+            if (themeMode === 'light' || themeMode === 'dark' || themeMode === 'auto') mode = themeMode;
+          }
+        } catch (error) {
+          /* Unreadable storage just means we fall back to the clock. */
+        }
+        var hour = new Date().getHours();
+        var night =
+          mode === 'dark' || (mode !== 'light' && (hour < DAY_START || hour >= NIGHT_START));
+        document.documentElement.dataset.theme = night ? 'night' : 'day';
+        var meta = document.querySelector('meta[name="theme-color"]:not([media])');
+        if (meta) meta.setAttribute('content', night ? '#131219' : '#FFFBF2');
+      })();
+    </script>
   </head>
   <body>
     <div id="root">
