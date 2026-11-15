@@ -15,6 +15,8 @@ type ButtonProps = {
   children: ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'night' | 'secondary' | 'ghost' | 'danger';
+  /** The one oversized, wet-thumb button on a screen. */
+  huge?: boolean;
   icon?: SkinTecIconName;
   iconAfter?: SkinTecIconName;
   block?: boolean;
@@ -32,6 +34,7 @@ export function Button({
   iconAfter,
   block,
   small,
+  huge,
   disabled,
   type = 'button',
   ariaLabel,
@@ -41,6 +44,7 @@ export function Button({
     `st-btn-${variant}`,
     block ? 'st-btn-block' : '',
     small ? 'st-btn-sm' : '',
+    huge ? 'st-btn-huge' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -66,91 +70,6 @@ export function IconButton({
     <button type="button" className="st-icon-btn" onClick={onClick} aria-label={label} title={label}>
       <SkinTecIcon name={name} size={20} />
     </button>
-  );
-}
-
-/* ---------------- Badge ---------------- */
-
-export function Badge({
-  children,
-  tone = 'neutral',
-  icon,
-}: {
-  children: ReactNode;
-  tone?: 'sun' | 'night' | 'treat' | 'recovery' | 'neutral';
-  icon?: SkinTecIconName;
-}) {
-  return (
-    <span className={`st-badge st-badge-${tone}`}>
-      {icon ? <SkinTecIcon name={icon} size={14} /> : null}
-      {children}
-    </span>
-  );
-}
-
-/* ---------------- Progress ---------------- */
-
-export function ProgressBar({
-  value,
-  total,
-  night,
-  label,
-}: {
-  value: number;
-  total: number;
-  night?: boolean;
-  label?: string;
-}) {
-  const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
-  return (
-    <div className="st-progress">
-      <div
-        className="st-progress-track"
-        role="progressbar"
-        aria-valuenow={value}
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-label={label ?? 'Routine progress'}
-      >
-        <div className={`st-progress-fill${night ? ' is-night' : ''}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="st-progress-label">
-        {value} / {total}
-      </span>
-    </div>
-  );
-}
-
-export function ProgressRing({
-  value,
-  total,
-  size = 56,
-  night,
-}: {
-  value: number;
-  total: number;
-  size?: number;
-  night?: boolean;
-}) {
-  const r = (size - 8) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = total > 0 ? Math.min(1, value / total) : 0;
-  return (
-    <svg className="st-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--st-track)" strokeWidth="6" />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke={night ? 'var(--st-sky-500)' : 'var(--st-yellow-400)'}
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-    </svg>
   );
 }
 
@@ -201,11 +120,11 @@ export function SettingRow({
 
 export function Notice({
   children,
-  tone = 'calm',
+  tone = 'plain',
   icon = 'info',
 }: {
   children: ReactNode;
-  tone?: 'calm' | 'warn' | 'good' | 'plain';
+  tone?: 'plain' | 'warn' | 'tip';
   icon?: SkinTecIconName;
 }) {
   const cls = tone === 'plain' ? 'st-notice' : `st-notice st-notice-${tone}`;

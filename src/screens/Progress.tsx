@@ -1,161 +1,112 @@
 import { useMemo } from 'react';
 import { useStore } from '../store/store';
-import { effectiveProgression, restartWeek, allowedStages } from '../engine/progression';
-import { FREQUENCY_SHORT } from '../data/defaults';
+import { phaseOn } from '../engine/progression';
+import { PHASES } from '../data/defaults';
 import { addDays, formatShortDate } from '../engine/dates';
-import { SkinTecIcon } from '../icons/SkinTecIcon';
-import { Badge, Notice, ProgressBar } from '../components/ui';
+import { Notice } from '../components/ui';
+
+const COMFORT_LABEL: Record<string, string> = {
+  comfortable: 'Comfortable',
+  a_little_dry: 'A little dry',
+  irritated: 'Irritated',
+  very_irritated: 'Very irritated',
+};
 
 export function ProgressScreen({ today }: { today: string }) {
   const { state } = useStore();
-  const progression = useMemo(() => effectiveProgression(state, today), [state, today]);
-  const ladder = useMemo(() => allowedStages(state), [state]);
+  const phase = useMemo(() => phaseOn(state, today), [state, today]);
 
   const finished = state.completions.filter((c) => c.completedAt);
-  const amCount = finished.filter((c) => c.routine === 'am').length;
-  const pmCount = finished.filter((c) => c.routine === 'pm').length;
-  const tretinoinNights = finished.filter((c) => c.routineType === 'pm_tretinoin').length;
-  const recoveryNights = finished.filter((c) => c.routineType === 'pm_recovery').length;
-  const dermaStampNights = finished.filter((c) => c.routineType === 'pm_derma_stamp').length;
-  const maskNights = finished.filter(
-    (c) => c.routine === 'pm' && c.completedSteps.some((id) => id.startsWith('pm-rec-mask-')),
-  ).length;
+  const count = (fn: (c: (typeof finished)[number]) => boolean) => finished.filter(fn).length;
 
+  // A streak counts days with anything logged. Today not logged yet doesn't break it.
   const streak = useMemo(() => {
-    let count = 0;
+    let n = 0;
     for (let i = 0; i < 400; i++) {
       const date = addDays(today, -i);
-      const any = finished.some((c) => c.date === date);
-      if (any) count += 1;
-      else if (i > 0 || date !== today) break;
+      if (finished.some((c) => c.date === date)) n += 1;
+      else if (i > 0) break;
     }
-    return count;
+    return n;
   }, [finished, today]);
 
   const stats = [
-    { label: 'Mornings completed', value: amCount },
-    { label: 'Nights completed', value: pmCount },
-    { label: 'Tretinoin nights', value: tretinoinNights },
-    { label: 'Recovery nights', value: recoveryNights },
-    { label: 'Mask nights', value: maskNights },
-    { label: 'Derma stamp nights', value: dermaStampNights },
     { label: 'Day streak', value: streak },
+    { label: 'Mornings', value: count((c) => c.routine === 'am') },
+    { label: 'BHA nights', value: count((c) => c.routineType === 'pm_bha') },
+    { label: 'Adapalene nights', value: count((c) => c.routineType === 'pm_adapalene') },
+    { label: 'Recovery nights', value: count((c) => c.routineType === 'pm_recovery') },
+    { label: 'Mask nights', value: count((c) => c.completedSteps.some((id) => id.startsWith('pm-mask-'))) },
   ];
 
   return (
     <>
-      <header className="st-mt-4">
-        <p className="st-eyebrow">Progress</p>
-        <h1 className="st-screen-title">Consistency</h1>
-        <p className="st-screen-sub">How steadily you are following your routine — nothing else.</p>
-      </header>
-
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <div>
-            <p className="st-eyebrow">Tretinoin restart</p>
-            <h2 className="st-card-title">Week {restartWeek(state, today)}</h2>
-            <p className="st-card-meta">Started {formatShortDate(state.settings.restartDate)}</p>
-          </div>
-          <Badge tone={progression.paused ? 'neutral' : 'treat'} icon={progression.paused ? 'pause' : 'tretinoin'}>
-            {progression.paused ? 'Paused' : `Stage ${progression.stageIndex + 1} of ${progression.stageCount}`}
-          </Badge>
-        </div>
-
-        <div className="st-mt-4">
-          <ProgressBar
-            value={progression.stageIndex + 1}
-            total={Math.max(1, progression.stageCount)}
-            label="Progression stages"
-          />
-        </div>
-
-        <div className="st-timeline">
-          {ladder.map((stage, i) => {
-            const done = i < progression.stageIndex;
-            const current = i === progression.stageIndex;
-            return (
-              <div key={stage.id} className={`st-timeline-row${done ? ' is-done' : current ? ' is-current' : ''}`}>
-                <span className="st-timeline-dot">
-                  {done ? <SkinTecIcon name="completion" size={16} title="Completed stage" /> : i + 1}
-                </span>
-                <span>
-                  <span className="st-timeline-label">{FREQUENCY_SHORT[stage.frequency]}</span>
-                  <span className="st-timeline-note" style={{ display: 'block' }}>
-                    {current
-                      ? progression.paused
-                        ? 'Current stage — progression paused'
-                        : progression.nextStageDate
-                          ? `Current stage — next increase ${formatShortDate(progression.nextStageDate)}`
-                          : 'Current stage'
-                      : done
-                        ? 'Completed'
-                        : stage.durationWeeks
-                          ? `${stage.durationWeeks} weeks`
-                          : 'Ongoing'}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {progression.paused && progression.pauseReason ? (
-          <div className="st-mt-4">
-            <Notice tone="calm" icon="recovery">
-              {progression.pauseReason} SkinTec is holding your current frequency. Follow your dermatologist
-              or prescriber's instructions if they differ.
-            </Notice>
-          </div>
-        ) : null}
+      <section className="hero">
+        <span className="kicker">Started {formatShortDate(state.settings.startDate)}</span>
+        <h1 className="big">Week {phase.week}</h1>
+        <span className="pill">{PHASES[phase.phase].name}</span>
       </section>
 
-      <h2 className="st-section-title st-mt-6">Routine adherence</h2>
-      <div className="st-grid-2">
-        {stats.map((stat) => (
-          <div className="st-stat" key={stat.label}>
-            <div className="st-stat-value">{stat.value}</div>
-            <div className="st-stat-label">{stat.label}</div>
+      {phase.steppedBack && phase.stepBackReason ? (
+        <Notice icon="info">{phase.stepBackReason} You’re one step gentler for now.</Notice>
+      ) : null}
+
+      <section className="phases" aria-label="Plan phases">
+        {PHASES.map((p, i) => (
+          <div key={p.name} className={`phase${i === phase.phase ? ' is-current' : i < phase.phase ? ' is-done' : ''}`}>
+            <span className="n">{i + 1}</span>
+            <span>
+              <span className="st-strong">
+                {p.name} · {p.weeks}
+              </span>
+              <span className="st-small st-muted" style={{ display: 'block' }}>
+                {p.summary}
+              </span>
+            </span>
           </div>
         ))}
-      </div>
+      </section>
 
-      <h2 className="st-section-title st-mt-6">Recent check-ins</h2>
-      {state.checkIns.length === 0 ? (
-        <div className="st-empty">No check-ins recorded yet.</div>
-      ) : (
-        <div className="st-stack-sm">
-          {[...state.checkIns]
-            .sort((a, b) => (a.date < b.date ? 1 : -1))
-            .slice(0, 7)
-            .map((entry) => {
-              const flags = [
-                entry.dryness ? 'dryness' : null,
-                entry.stinging ? 'stinging' : null,
-                entry.redness ? 'redness' : null,
-                entry.peeling ? 'peeling' : null,
-              ].filter(Boolean);
-              return (
-                <div className="st-day" key={entry.date} style={{ cursor: 'default' }}>
-                  <span className="st-day-date">
-                    <span className="st-day-dow">{formatShortDate(entry.date)}</span>
-                  </span>
-                  <span className="st-day-main">
-                    <span className="st-day-title">
-                      {entry.comfort.replace(/_/g, ' ').replace(/^./, (ch) => ch.toUpperCase())}
-                    </span>
-                    <span className="st-day-sub">{flags.length ? flags.join(', ') : 'No extra indicators'}</span>
-                  </span>
-                  <SkinTecIcon name="checkin" size={19} />
-                </div>
-              );
-            })}
+      <section>
+        <h2 className="subtitle" style={{ marginBottom: 8 }}>
+          Logged
+        </h2>
+        <div className="st-grid-2">
+          {stats.map((s) => (
+            <div className="stat" key={s.label}>
+              <div className="stat-value">{s.value}</div>
+              <div className="stat-label">{s.label}</div>
+            </div>
+          ))}
         </div>
-      )}
+      </section>
 
-      <p className="st-xs st-muted st-mt-6 st-center">
-        SkinTec tracks routine consistency only. It never scores appearance.
-      </p>
+      <section>
+        <h2 className="subtitle" style={{ marginBottom: 8 }}>
+          Check-ins
+        </h2>
+        {state.checkIns.length === 0 ? (
+          <p className="st-small st-muted">Nothing logged yet. You can log how your skin feels from Today.</p>
+        ) : (
+          <div>
+            {[...state.checkIns]
+              .sort((a, b) => (a.date < b.date ? 1 : -1))
+              .slice(0, 7)
+              .map((c) => {
+                const flags = [c.dryness && 'dryness', c.stinging && 'stinging', c.redness && 'redness', c.peeling && 'peeling'].filter(Boolean);
+                return (
+                  <div className="st-row" key={c.date}>
+                    <div className="st-row-main">
+                      <div className="st-row-title">{COMFORT_LABEL[c.comfort] ?? c.comfort}</div>
+                      <div className="st-row-sub">{flags.length ? flags.join(', ') : 'Nothing else'}</div>
+                    </div>
+                    <span className="st-xs st-muted">{formatShortDate(c.date)}</span>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </section>
     </>
   );
 }

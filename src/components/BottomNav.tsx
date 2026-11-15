@@ -1,13 +1,11 @@
-import { SkinTecIcon, type SkinTecIconName } from '../icons/SkinTecIcon';
+export type TabKey = 'today' | 'week' | 'notes' | 'progress' | 'settings';
 
-export type TabKey = 'today' | 'schedule' | 'products' | 'progress' | 'settings';
-
-const TABS: { key: TabKey; label: string; icon: SkinTecIconName }[] = [
-  { key: 'today', label: 'Today', icon: 'today' },
-  { key: 'schedule', label: 'Schedule', icon: 'calendar' },
-  { key: 'products', label: 'Products', icon: 'products' },
-  { key: 'progress', label: 'Progress', icon: 'progress' },
-  { key: 'settings', label: 'Settings', icon: 'settings' },
+export const TABS: { key: TabKey; label: string }[] = [
+  { key: 'today', label: 'Today' },
+  { key: 'week', label: 'Week' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'progress', label: 'Progress' },
+  { key: 'settings', label: 'Settings' },
 ];
 
 export function BottomNav({ tab, onChange }: { tab: TabKey; onChange: (tab: TabKey) => void }) {
@@ -22,8 +20,7 @@ export function BottomNav({ tab, onChange }: { tab: TabKey; onChange: (tab: TabK
             aria-current={tab === item.key ? 'page' : undefined}
             onClick={() => onChange(item.key)}
           >
-            <SkinTecIcon name={item.icon} size={22} />
-            {item.label}
+            <span>{item.label}</span>
           </button>
         ))}
       </div>

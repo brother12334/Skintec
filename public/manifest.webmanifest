@@ -1,14 +1,14 @@
 {
   "name": "SkinTec",
   "short_name": "SkinTec",
-  "description": "An intelligent skincare routine companion: morning and night routines, tretinoin progression, recovery nights and mask scheduling, handled for you.",
+  "description": "Your skincare plan, one step at a time: dapsone mornings, BHA, adapalene and recovery nights.",
   "id": "/Skintec/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FFFBF2",
-  "theme_color": "#FFFBF2",
+  "background_color": "#f6bfd6",
+  "theme_color": "#f6bfd6",
   "categories": ["health", "lifestyle", "productivity"],
   "icons": [
     { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

@@ -70,3 +70,12 @@ export function formatShortDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
+
+/** "SUN 15 NOV" style, for the header. */
+export function formatHeaderDate(iso: string): string {
+  const d = fromISO(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dow = d.toLocaleDateString(undefined, { weekday: 'short' });
+  const mon = d.toLocaleDateString(undefined, { month: 'short' });
+  return `${dow} ${d.getDate()} ${mon}`;
+}

@@ -36,7 +36,8 @@ export function CheckInSheet({
     peeling: existing?.peeling ?? false,
   });
 
-  const willPause = comfort === 'very_irritated' || comfort === 'irritated';
+  // Mirrors readIrritation(): what actually steps the plan back.
+  const willPause = comfort === 'very_irritated' || (comfort === 'irritated' && Object.values(flags).some(Boolean));
 
   return (
     <Modal title="How does your skin feel?" onClose={onClose}>
@@ -49,21 +50,18 @@ export function CheckInSheet({
               type="button"
               role="radio"
               aria-checked={selected}
-              className="st-day"
-              style={selected ? { borderColor: 'var(--st-yellow-400)', boxShadow: '0 0 0 3px var(--st-yellow-100)' } : undefined}
+              className="choice"
               onClick={() => setComfort(option.value)}
             >
-              <span className="st-day-main">
-                <span className="st-day-title">{option.label}</span>
-              </span>
-              {selected ? <SkinTecIcon name="completion" size={20} title="Selected" /> : null}
+              <span className="box">{selected ? <SkinTecIcon name="completion" size={16} /> : null}</span>
+              {option.label}
             </button>
           );
         })}
       </div>
 
-      <h3 className="st-section-title st-mt-6">Anything else today?</h3>
-      <div className="st-chip-row">
+      <h3 className="subtitle st-mt-6" style={{ marginBottom: 8 }}>Anything else today?</h3>
+      <div className="st-grid-2">
         {INDICATORS.map((indicator) => {
           const on = flags[indicator.key];
           return (
@@ -71,12 +69,7 @@ export function CheckInSheet({
               key={indicator.key}
               type="button"
               aria-pressed={on}
-              className="st-btn st-btn-sm"
-              style={
-                on
-                  ? { background: 'var(--st-peach-100)', borderColor: 'var(--st-peach-300)', color: 'var(--st-peach-600)' }
-                  : { background: 'var(--st-surface)', borderColor: 'var(--st-line-strong)' }
-              }
+              className={`st-btn st-btn-sm ${on ? 'st-btn-primary' : 'st-btn-secondary'}`}
               onClick={() => setFlags((prev) => ({ ...prev, [indicator.key]: !prev[indicator.key] }))}
             >
               {on ? <SkinTecIcon name="completion" size={15} /> : null}
@@ -88,9 +81,9 @@ export function CheckInSheet({
 
       {willPause ? (
         <div className="st-mt-4">
-          <Notice tone="calm" icon="recovery">
-            SkinTec will favour recovery and hold your current frequency. Follow your dermatologist or
-            prescriber's instructions if they differ.
+          <Notice tone="tip" icon="recovery">
+            SkinTec will go back a step for a week. If burning or redness sticks around after BHA, cut back to
+            once a week.
           </Notice>
         </div>
       ) : null}
@@ -98,6 +91,7 @@ export function CheckInSheet({
       <div className="st-mt-6">
         <Button
           variant="primary"
+          huge
           block
           icon="checkin"
           onClick={() => onSave({ date, comfort, ...flags })}

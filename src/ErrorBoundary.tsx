@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
             <div style={{ color: 'var(--st-peach-600)' }}>
               <SkinTecIcon name="warning" size={40} strokeWidth={1.5} />
             </div>
-            <h1 className="st-card-title st-mt-3">Something went wrong</h1>
+            <h1 className="title st-mt-3">Something went wrong</h1>
             <p className="st-soft st-mt-2">
               SkinTec could not draw this screen. Your data is still saved on this device.
             </p>
