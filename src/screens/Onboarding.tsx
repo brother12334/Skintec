@@ -1,164 +1,107 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import type { MorningMode, TretinoinFrequency } from '../types';
-import { FREQUENCY_LABEL } from '../data/defaults';
+import { PHASES } from '../data/defaults';
 import { isValidISO } from '../engine/dates';
-import { SkinTecIcon, SkinTecMark } from '../icons/SkinTecIcon';
-import { Button, Field, Notice } from '../components/ui';
-import { MorningChooser } from '../components/MorningChooser';
+import { moodClass } from '../engine/mood';
+import { Button, Field } from '../components/ui';
+import { SkinTecIcon } from '../icons/SkinTecIcon';
+
+const MOODS = ['recovery', 'bha', 'adapalene'] as const;
 
 export function Onboarding({ today }: { today: string }) {
-  const { state, updateSettings, updateProgression } = useStore();
+  const { state, updateSettings } = useStore();
   const [step, setStep] = useState(0);
-  const [morningMode, setMorningMode] = useState<MorningMode>(state.settings.morningMode);
-  const [approved, setApproved] = useState<TretinoinFrequency>(state.progression.approvedMaxFrequency);
-  const [restart, setRestart] = useState(today);
+  const [start, setStart] = useState(today);
+  const [adapalene, setAdapalene] = useState(state.settings.adapaleneReady);
 
-  const steps = [
-    {
-      title: 'Welcome to SkinTec',
-      body: (
-        <>
-          <p className="st-soft">
-            SkinTec decides what your skin needs each morning and night, so you never have to work out the
-            plan yourself.
-          </p>
-          <ul className="st-steps st-mt-4" style={{ listStyle: 'none' }}>
-            {[
-              { icon: 'morning', text: 'A morning routine that stays simple' },
-              { icon: 'tretinoin', text: 'A tretinoin schedule that progresses on its own' },
-              { icon: 'recovery', text: 'Real recovery nights when your skin needs them' },
-              { icon: 'mask', text: 'Masks placed only where they are compatible' },
-            ].map((item) => (
-              <li key={item.text} className="st-flex" style={{ padding: '6px 0' }}>
-                <SkinTecIcon name={item.icon as 'morning'} size={20} />
-                <span className="st-small">{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      ),
-    },
-    {
-      title: 'Choose your morning',
-      body: (
-        <>
-          <p className="st-soft">You can switch at any time from Today or Settings.</p>
-          <div className="st-mt-4">
-            <MorningChooser state={state} value={morningMode} onChange={setMorningMode} />
-          </div>
-          <div className="st-mt-4">
-            <Notice tone="plain" icon="sunscreen">
-              Whichever you pick, SkinTec adds nothing else to your morning.
-            </Notice>
-          </div>
-        </>
-      ),
-    },
-    {
-      title: 'Your tretinoin plan',
-      body: (
-        <>
-          <Field
-            label="Prescriber-approved maximum frequency"
-            htmlFor="onb-max"
-            hint="SkinTec starts at 2 nights a week and works up to this — never beyond it."
-          >
-            <select
-              id="onb-max"
-              className="st-select"
-              value={approved}
-              onChange={(e) => setApproved(e.target.value as TretinoinFrequency)}
-            >
-              {(['twice_weekly', 'three_times_weekly', 'every_other_night', 'nightly'] as TretinoinFrequency[]).map((f) => (
-                <option key={f} value={f}>
-                  {FREQUENCY_LABEL[f]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Restart date" htmlFor="onb-restart" hint="Your schedule is generated from this date.">
-            <input
-              id="onb-restart"
-              type="date"
-              className="st-input"
-              value={restart}
-              onChange={(e) => setRestart(e.target.value)}
-            />
-          </Field>
-          <Notice tone="plain" icon="info">
-            SkinTec organises the schedule your dermatologist or prescriber approved. Their instructions
-            always take priority, and SkinTec never assesses skin conditions.
-          </Notice>
-        </>
-      ),
-    },
-  ];
-
-  const current = steps[step];
-  const last = step === steps.length - 1;
+  const last = step === 2;
 
   return (
-    <div className="st-player">
-      <div className="st-player-body">
-        <div className="st-center st-mt-4">
-          <SkinTecMark size={58} />
-          <p className="st-eyebrow st-mt-3">SkinTec</p>
-        </div>
-        <section className="st-card st-mt-4">
-          <h1 className="st-card-title">{current.title}</h1>
-          <div className="st-mt-3">{current.body}</div>
-        </section>
-        <div className="st-flex st-mt-4" style={{ justifyContent: 'center', gap: 6 }}>
-          {steps.map((s, i) => (
-            <span
-              key={s.title}
-              style={{
-                width: i === step ? 22 : 8,
-                height: 8,
-                borderRadius: 999,
-                background: i === step ? 'var(--st-yellow-400)' : 'var(--st-line-strong)',
-                transition: 'width var(--st-fast)',
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      <footer className="st-player-foot">
-        <div className="st-player-foot-inner">
+    <div className={`onb ${moodClass(MOODS[step])}`} style={{ background: 'var(--bg)', color: 'var(--ink)' }}>
+      <div className="onb-inner">
+        <span className="kicker">Step {step + 1} of 3</span>
+
+        {step === 0 ? (
+          <>
+            <h1 className="big">Your new plan</h1>
+            <p className="player-instr">
+              Dapsone every morning. At night: BHA, adapalene or a recovery night, each on its own weekday. SkinTec tells you which,
+              one step at a time.
+            </p>
+            <div className="st-stack-sm">
+              <span className="tag sw-bha">Mon, Fri · BHA</span>
+              <span className="tag sw-adapalene">Wed, Sat · Adapalene</span>
+              <span className="tag sw-recovery">Tue, Thu, Sun · Recovery</span>
+            </div>
+            <p className="st-small st-muted">Miss a night? Nothing moves. The next day is just the next day.</p>
+          </>
+        ) : null}
+
+        {step === 1 ? (
+          <>
+            <h1 className="big">Adapalene</h1>
+            <p className="player-instr">
+              You’ll need to buy adapalene (Differin gel). It’s sold over the counter. Check with your dapsone prescriber before adding
+              it. You won’t need it until week 3.
+            </p>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={adapalene}
+              className="choice"
+              onClick={() => setAdapalene((v) => !v)}
+            >
+              <span className="box">{adapalene ? <SkinTecIcon name="completion" size={16} /> : null}</span>I have it, and my prescriber said yes
+            </button>
+            <p className="st-small st-muted">You can change this any time in Settings. Until then, adapalene nights are recovery nights.</p>
+          </>
+        ) : null}
+
+        {step === 2 ? (
+          <>
+            <h1 className="big">Start slowly</h1>
+            <div className="phases">
+              {PHASES.map((p, i) => (
+                <div className={`phase${i === 0 ? ' is-current' : ''}`} key={p.name}>
+                  <span className="n">{i + 1}</span>
+                  <span>
+                    <span className="st-strong">{p.weeks}</span>
+                    <span className="st-small st-muted" style={{ display: 'block' }}>
+                      {p.summary}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <Field label="Day 1" htmlFor="onb-start">
+              <input id="onb-start" type="date" className="st-input" value={start} onChange={(e) => setStart(e.target.value)} />
+            </Field>
+          </>
+        ) : null}
+
+        <div className="onb-foot">
           <Button
             variant="primary"
+            huge
             block
-            iconAfter={last ? undefined : 'forward'}
-            icon={last ? 'start' : undefined}
             onClick={() => {
-              if (!last) {
-                setStep((s) => s + 1);
-                return;
-              }
-              const safeRestart = isValidISO(restart) ? restart : today;
-              updateSettings({ morningMode, restartDate: safeRestart, onboarded: true });
-              updateProgression({
-                approvedMaxFrequency: approved,
-                currentStage: 0,
-                stageStartedAt: safeRestart,
-                paused: false,
+              if (!last) return setStep((s) => s + 1);
+              updateSettings({
+                startDate: isValidISO(start) ? start : today,
+                adapaleneReady: adapalene,
+                onboarded: true,
               });
             }}
           >
-            {last ? 'Start using SkinTec' : 'Continue'}
+            {last ? 'Start the plan' : 'Next'}
           </Button>
           {step > 0 ? (
             <Button variant="ghost" block icon="back" onClick={() => setStep((s) => s - 1)}>
               Back
             </Button>
-          ) : (
-            <Button variant="ghost" block onClick={() => updateSettings({ onboarded: true })}>
-              Skip setup
-            </Button>
-          )}
+          ) : null}
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

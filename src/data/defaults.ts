@@ -1,100 +1,129 @@
-import type {
-  AppState,
-  Mask,
-  Product,
-  Settings,
-  Treatment,
-  TretinoinProgressionStage,
-} from '../types';
+import type { AppState, MaskKind, NightKind, Product, Settings } from '../types';
+import type { WeekdayKey } from '../engine/dates';
 
 export const PRODUCT_IDS = {
-  anuaFirst: 'anua-first-cleanser',
-  anuaSecond: 'anua-second-cleanser',
-  lrp: 'lrp-triple-repair',
-  collagenBank: 'neutrogena-collagen-bank',
-  tretinoin: 'tretinoin',
-  retinol: 'retinol',
-  volcanoMask: 'alaskan-volcano-mask',
-  riceMask: 'korean-rice-mask',
-  laserDermMask: 'laserderm-korean-mask',
+  oilCleanser: 'oil-cleanser',
+  blanc: 'blanc-cleanser',
+  dapsone: 'dapsone-gel',
+  bha: 'paulas-choice-bha',
+  adapalene: 'adapalene',
+  lrp: 'lrp-moisturizer',
+  vaseline: 'vaseline',
   sunscreen: 'sunscreen',
-  skinAqua: 'skin-aqua-uv-serum',
-  dermaStamp: 'derma-stamp',
-  arganOil: 'argan-oil',
-  aquaphor: 'aquaphor',
+  clayMask: 'clay-mask',
+  hydratingMask: 'hydrating-mask',
 } as const;
 
 export const defaultProducts: Product[] = [
-  { id: PRODUCT_IDS.anuaFirst, name: 'Anua First Cleanser', category: 'cleanser', notes: 'Oil-based first cleanse.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.anuaSecond, name: 'Anua Second Cleanser', category: 'cleanser', notes: 'Gentle water-based second cleanse.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.lrp, name: 'La Roche-Posay Triple Repair Moisturizing Cream', shortName: 'LRP Triple Repair', category: 'moisturizer', notes: 'Barrier cream. Used on both sides of tretinoin.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.collagenBank, name: 'Neutrogena Collagen Bank', shortName: 'Collagen Bank', category: 'serum', notes: 'In your library. Not scheduled automatically — add it to a routine yourself if you want it.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.tretinoin, name: 'Tretinoin', category: 'treatment', notes: 'Prescription retinoid. Follow your prescriber.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.retinol, name: 'Retinol', category: 'treatment', notes: 'Never scheduled on a tretinoin night.', active: false, builtIn: true },
-  { id: PRODUCT_IDS.volcanoMask, name: 'Alaskan Volcano Mask', category: 'mask', notes: 'More intensive. Recovery nights only.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.riceMask, name: 'Korean Rice Mask', category: 'mask', notes: 'Gentle, recovery-compatible.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.laserDermMask, name: 'LaserDerm Korean Mask', shortName: 'LaserDerm Mask', category: 'mask', notes: 'Soothing sheet mask, recovery-compatible.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.sunscreen, name: 'Sunscreen', category: 'sunscreen', notes: 'Placeholder — rename it to the sunscreen you actually use.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.skinAqua, name: 'Skin Aqua UV Serum', category: 'sunscreen', notes: 'Used alone in Skin Aqua mornings.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.dermaStamp, name: 'Derma Stamp', category: 'treatment', notes: 'Weekly. Never on a tretinoin night — SkinTec keeps them apart.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.arganOil, name: 'Argan Oil', category: 'other', notes: 'Applied immediately after the derma stamp.', active: true, builtIn: true },
-  { id: PRODUCT_IDS.aquaphor, name: 'Aquaphor', category: 'other', notes: 'Optional last step. You choose spot treatment or whole face while doing the routine.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.oilCleanser, name: 'Oil cleanser', category: 'cleanser', notes: 'First cleanse, on a dry face with dry hands.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.blanc, name: 'Blanc cleanser', category: 'cleanser', notes: 'Second cleanse. Removes the oil film so it does not clog your forehead.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.dapsone, name: 'Dapsone gel', category: 'treatment', notes: 'Every morning. Never with benzoyl peroxide: the combination can turn skin or hair orange.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.bha, name: "Paula's Choice 2% BHA Liquid Exfoliant", shortName: "Paula's Choice BHA", category: 'treatment', notes: 'BHA nights. A little tingle is normal.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.adapalene, name: 'Adapalene (Differin gel)', shortName: 'Adapalene', category: 'treatment', notes: 'Sold over the counter; you need to buy it. Check with your dapsone prescriber before adding it.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.lrp, name: 'La Roche-Posay moisturizer', shortName: 'La Roche-Posay', category: 'moisturizer', notes: 'Every morning and every night.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.vaseline, name: 'Vaseline', category: 'other', notes: 'Whole face on recovery nights. Only dry or healing spots on active nights.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.sunscreen, name: 'Sunscreen, SPF 30 or higher', shortName: 'Sunscreen', category: 'sunscreen', notes: 'Never skip it.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.clayMask, name: 'Clay mask (kaolin or bentonite)', shortName: 'Clay mask', category: 'mask', notes: 'Sundays, nose and T-zone only.', active: true, builtIn: true },
+  { id: PRODUCT_IDS.hydratingMask, name: 'Hydrating or soothing mask', shortName: 'Hydrating mask', category: 'mask', notes: 'Sheet masks, centella, cica, ceramide. Any recovery night.', active: true, builtIn: true },
 ];
 
-export const defaultTreatments: Treatment[] = [
-  { id: 'treatment-tretinoin', name: 'Tretinoin', active: true, frequency: 'Scheduled by SkinTec', concentration: '0.025%', notes: '' },
-  { id: 'treatment-retinol', name: 'Retinol', active: false, frequency: 'Not scheduled', concentration: '', notes: 'Never combined with tretinoin.' },
-  { id: 'treatment-derma-stamp', name: 'Derma Stamp', active: true, frequency: 'Weekly', notes: 'Followed immediately by argan oil.' },
-];
+/** The full schedule (week 5 on). Phases only ever make a night gentler than this. */
+export const WEEKLY_SCHEDULE: Record<WeekdayKey, { kind: NightKind; mask?: MaskKind }> = {
+  mon: { kind: 'bha' },
+  tue: { kind: 'recovery' },
+  wed: { kind: 'adapalene' },
+  thu: { kind: 'recovery', mask: 'hydrating' },
+  fri: { kind: 'bha' },
+  sat: { kind: 'adapalene' },
+  sun: { kind: 'recovery', mask: 'clay' },
+};
 
-export const defaultMasks: Mask[] = [
-  {
-    id: 'mask-volcano',
-    name: 'Alaskan Volcano Mask',
-    productId: PRODUCT_IDS.volcanoMask,
-    requiresRecoveryNight: true,
-    avoidWithTretinoin: true,
-    avoidWithRetinol: true,
-    frequencyLimit: 1,
-    preferredDays: ['sat'],
-    priority: 3,
-    avoidWithMaskIds: ['mask-laserderm'],
-    enabled: true,
-  },
-  {
-    id: 'mask-rice',
-    name: 'Korean Rice Mask',
-    productId: PRODUCT_IDS.riceMask,
-    requiresRecoveryNight: true,
-    avoidWithTretinoin: true,
-    avoidWithRetinol: false,
-    frequencyLimit: 1,
-    preferredDays: ['tue'],
-    priority: 2,
-    avoidWithMaskIds: [],
-    enabled: true,
-  },
-  {
-    id: 'mask-laserderm',
-    name: 'LaserDerm Korean Mask',
-    productId: PRODUCT_IDS.laserDermMask,
-    requiresRecoveryNight: true,
-    avoidWithTretinoin: true,
-    avoidWithRetinol: false,
-    frequencyLimit: 1,
-    preferredDays: ['thu'],
-    priority: 1,
-    avoidWithMaskIds: ['mask-volcano'],
-    enabled: true,
-  },
-];
+export const PHASES = [
+  { name: 'Start slowly', weeks: 'Weeks 1–2', summary: 'Dapsone as normal, BHA on Monday and Friday, every other night is recovery.' },
+  { name: 'Add adapalene', weeks: 'Weeks 3–4', summary: 'Adapalene on Wednesdays only. Saturday stays a recovery night.' },
+  { name: 'Full schedule', weeks: 'Week 5 on', summary: 'BHA Monday and Friday, adapalene Wednesday and Saturday.' },
+] as const;
 
-/** Progression is configuration, never hard-coded in the UI. */
-export const defaultStages: TretinoinProgressionStage[] = [
-  { id: 'stage-1', name: 'Initial restart', frequency: 'twice_weekly', durationWeeks: 2, enabled: true },
-  { id: 'stage-2', name: 'Increased frequency', frequency: 'three_times_weekly', durationWeeks: 2, enabled: true },
-  { id: 'stage-3', name: 'Every other night', frequency: 'every_other_night', durationWeeks: 2, enabled: true },
-  { id: 'stage-4', name: 'Nightly', frequency: 'nightly', enabled: true },
+export const NIGHT_LABEL: Record<NightKind, string> = {
+  bha: 'BHA night',
+  adapalene: 'Adapalene night',
+  recovery: 'Recovery night',
+};
+
+export const MASK_LABEL: Record<MaskKind, string> = {
+  clay: 'Clay mask',
+  hydrating: 'Hydrating mask',
+};
+
+/** Every note from the plan, grouped for the Notes screen. */
+export const PLAN_NOTES: { title: string; items: string[] }[] = [
+  {
+    title: 'Morning',
+    items: [
+      'Rinse with water, then pat your face completely dry.',
+      'Dapsone gel: a thin, pea-sized layer on the areas where you break out. Let it dry for a minute.',
+      'La Roche-Posay moisturizer, then sunscreen.',
+      'Never skip sunscreen. BHA and adapalene make your skin burn more easily, and sun makes picking marks darker and longer-lasting.',
+      'Don’t use benzoyl peroxide with dapsone. The combination can turn your skin or hair orange.',
+    ],
+  },
+  {
+    title: 'Every night',
+    items: [
+      'Oil cleanser: dry face, dry hands. Massage for 1–2 minutes, mostly on your nose. Add water until it turns milky, then rinse.',
+      'Blanc cleanser: this removes the oil film so it doesn’t clog your forehead.',
+      'Pat completely dry. Actives sting more on damp skin.',
+      'Tonight’s step from the schedule, then La Roche-Posay moisturizer, then Vaseline.',
+    ],
+  },
+  {
+    title: 'BHA nights',
+    items: [
+      'Use your fingers or a cotton pad. Put a full layer on your nose and a lighter one on your cheeks and forehead.',
+      'Avoid your eyes, the corners of your nose and mouth, and any picked or raw spots.',
+      'Wait 2–3 minutes, then put on your moisturizer.',
+      'A little tingle is normal. If you get burning or redness that sticks around, cut back to once a week.',
+    ],
+  },
+  {
+    title: 'Adapalene nights',
+    items: [
+      'You’ll need to buy adapalene (Differin gel). It’s sold over the counter. Check with your dapsone prescriber before adding it.',
+      'Use a pea-sized amount for your whole face, focusing on your forehead and wherever you get bumps.',
+      'Avoid your eyes, mouth corners and nose creases.',
+      'If it’s too irritating, put moisturizer on first, then adapalene, then moisturizer again (a “sandwich”).',
+      'Expect a possible purge (extra small breakouts) for 4–8 weeks. That’s normal, so keep going.',
+    ],
+  },
+  {
+    title: 'Vaseline rule',
+    items: [
+      'Recovery nights: slug your whole face.',
+      'BHA or adapalene nights: put Vaseline only on dry, irritated or healing spots, not over the active product. It makes the active stronger and more irritating.',
+    ],
+  },
+  {
+    title: 'Masks',
+    items: [
+      'Clay masks (kaolin or bentonite): Sundays, only on your nose and T-zone. Take it off before it dries and cracks, then moisturizer and Vaseline.',
+      'Hydrating or soothing masks (sheet masks, centella, cica, ceramide): any recovery night, as often as you want. Moisturizer and Vaseline after.',
+      'Never on BHA or adapalene nights: masks with AHA, BHA, retinol or “peeling” in the name.',
+      'Avoid completely: peel-off masks and nose pore strips. They damage your skin and make pores look bigger over time.',
+    ],
+  },
+  {
+    title: 'Start slowly',
+    items: [
+      'Weeks 1–2: dapsone as normal, BHA Mon and Fri, every other night is recovery.',
+      'Weeks 3–4: add adapalene on Wednesdays only.',
+      'Week 5 on: the full schedule.',
+      'If your skin gets irritated, go back a step for a week.',
+    ],
+  },
+  {
+    title: 'Missed a night?',
+    items: ['Nothing moves. Each night follows its weekday, so just do tonight’s routine as planned.'],
+  },
 ];
 
 export function todayISO(date = new Date()): string {
@@ -105,14 +134,8 @@ export function todayISO(date = new Date()): string {
 }
 
 export const defaultSettings: Settings = {
-  morningMode: 'standard',
-  tretinoinActive: true,
-  tretinoinConcentration: '0.025%',
-  restartDate: todayISO(),
-  prescriberNotes: '',
-  retinolActive: false,
-  dermaStampActive: true,
-  dermaStampDay: 'wed',
+  startDate: todayISO(),
+  adapaleneReady: false,
   notifications: {
     morningReminder: false,
     morningTime: '07:30',
@@ -120,42 +143,17 @@ export const defaultSettings: Settings = {
     nightTime: '21:30',
     completionReminder: false,
   },
-  themeMode: 'auto',
+  themeMode: 'light',
   reducedMotion: false,
   onboarded: false,
 };
 
 export function createDefaultState(): AppState {
-  const restart = todayISO();
   return {
-    version: 1,
-    settings: { ...defaultSettings, restartDate: restart },
+    version: 2,
+    settings: { ...defaultSettings, startDate: todayISO(), notifications: { ...defaultSettings.notifications } },
     products: defaultProducts.map((p) => ({ ...p })),
-    treatments: defaultTreatments.map((t) => ({ ...t })),
-    masks: defaultMasks.map((m) => ({ ...m, preferredDays: [...m.preferredDays], avoidWithMaskIds: [...m.avoidWithMaskIds] })),
-    stages: defaultStages.map((s) => ({ ...s })),
-    progression: {
-      currentStage: 0,
-      approvedMaxFrequency: 'every_other_night',
-      stageStartedAt: restart,
-      stageDurationWeeks: 2,
-      paused: false,
-    },
     completions: [],
     checkIns: [],
   };
 }
-
-export const FREQUENCY_LABEL: Record<string, string> = {
-  twice_weekly: '2 nights / week',
-  three_times_weekly: '3 nights / week',
-  every_other_night: 'Every other night',
-  nightly: 'Every night',
-};
-
-export const FREQUENCY_SHORT: Record<string, string> = {
-  twice_weekly: '2× weekly',
-  three_times_weekly: '3× weekly',
-  every_other_night: 'Every other night',
-  nightly: 'Nightly',
-};

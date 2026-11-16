@@ -6,7 +6,6 @@ export type ProductCategory =
   | 'treatment'
   | 'sunscreen'
   | 'mask'
-  | 'serum'
   | 'other';
 
 export type Product = {
@@ -21,90 +20,40 @@ export type Product = {
   builtIn?: boolean;
 };
 
-export type Treatment = {
-  id: string;
-  name: string;
-  active: boolean;
-  frequency: string;
-  concentration?: string;
-  notes?: string;
-};
-
 export type RoutineStepKind =
+  | 'rinse'
+  | 'dry'
   | 'cleanser'
-  | 'moisturizer'
-  | 'tretinoin'
-  | 'retinol'
+  | 'dapsone'
+  | 'bha'
+  | 'adapalene'
+  | 'wait'
   | 'mask'
-  | 'sunscreen'
-  | 'serum'
-  | 'derma_stamp'
-  | 'oil'
+  | 'moisturizer'
   | 'occlusive'
-  | 'wait';
+  | 'sunscreen';
 
 export type RoutineStep = {
   id: string;
   name: string;
   kind: RoutineStepKind;
   instruction: string;
-  /** Mandatory steps can never be toggled off — e.g. the closing moisturizer. */
+  /** Extra notes from the plan, shown under the instruction. */
+  tips?: string[];
+  /** Required steps must be done before a routine counts as finished. */
   mandatory: boolean;
   productId?: string;
 };
 
-export type RoutineType =
-  | 'am_standard'
-  | 'am_skin_aqua'
-  | 'pm_tretinoin'
-  | 'pm_recovery'
-  | 'pm_derma_stamp';
+/** What a night is for. Every night runs the same base routine around it. */
+export type NightKind = 'bha' | 'adapalene' | 'recovery';
 
-export type RoutineTemplate = {
-  id: string;
-  type: RoutineType;
-  steps: RoutineStep[];
-};
+export type MaskKind = 'clay' | 'hydrating';
 
-export type TretinoinFrequency =
-  | 'twice_weekly'
-  | 'three_times_weekly'
-  | 'every_other_night'
-  | 'nightly';
+export type RoutineType = 'am' | 'pm_bha' | 'pm_adapalene' | 'pm_recovery';
 
-export type TretinoinProgressionStage = {
-  id: string;
-  name: string;
-  frequency: TretinoinFrequency;
-  durationWeeks?: number;
-  enabled: boolean;
-};
-
-export type TretinoinProgression = {
-  currentStage: number;
-  approvedMaxFrequency: TretinoinFrequency;
-  stageStartedAt: string;
-  stageDurationWeeks: number;
-  paused: boolean;
-  pauseReason?: string;
-};
-
-export type Mask = {
-  id: string;
-  name: string;
-  productId: string;
-  requiresRecoveryNight: boolean;
-  avoidWithTretinoin: boolean;
-  avoidWithRetinol: boolean;
-  /** Maximum uses per week. */
-  frequencyLimit: number;
-  /** ISO weekday keys: 'mon' … 'sun'. */
-  preferredDays: string[];
-  /** Higher wins when two masks want the same night. */
-  priority: number;
-  avoidWithMaskIds: string[];
-  enabled: boolean;
-};
+/** The three "start slowly" phases. 0 = weeks 1–2, 1 = weeks 3–4, 2 = week 5 on. */
+export type PhaseIndex = 0 | 1 | 2;
 
 export type RoutineCompletion = {
   date: string;
@@ -112,8 +61,6 @@ export type RoutineCompletion = {
   routineType: RoutineType;
   completedSteps: string[];
   completedAt?: string;
-  /** What was chosen at the Aquaphor step, when it was used. */
-  aquaphor?: AquaphorChoice;
 };
 
 export type SkinComfort = 'comfortable' | 'a_little_dry' | 'irritated' | 'very_irritated';
@@ -127,13 +74,8 @@ export type SkinCheckIn = {
   peeling: boolean;
 };
 
-export type MorningMode = 'standard' | 'skin_aqua';
-
 /** 'auto' follows the device clock: bright by day, dark after dark. */
 export type ThemeMode = 'auto' | 'light' | 'dark';
-
-/** Aquaphor closes a routine when you want it — on spots only, or over the whole face. */
-export type AquaphorChoice = 'spot' | 'face';
 
 export type NotificationSettings = {
   morningReminder: boolean;
@@ -144,15 +86,12 @@ export type NotificationSettings = {
 };
 
 export type Settings = {
-  morningMode: MorningMode;
-  tretinoinActive: boolean;
-  tretinoinConcentration: string;
-  restartDate: string;
-  prescriberNotes: string;
-  retinolActive: boolean;
-  dermaStampActive: boolean;
-  /** Weekday key ('mon'…'sun') the derma stamp is scheduled on. */
-  dermaStampDay: string;
+  /** Day 1 of the plan. Phases count whole weeks from here. */
+  startDate: string;
+  /** Adapalene is bought and the dapsone prescriber has okayed it. Until then its nights are recovery. */
+  adapaleneReady: boolean;
+  /** "Go back a step for a week": the plan runs one phase gentler through this date. */
+  stepBackUntil?: string;
   notifications: NotificationSettings;
   themeMode: ThemeMode;
   reducedMotion: boolean;
@@ -163,25 +102,26 @@ export type AppState = {
   version: number;
   settings: Settings;
   products: Product[];
-  treatments: Treatment[];
-  masks: Mask[];
-  stages: TretinoinProgressionStage[];
-  progression: TretinoinProgression;
   completions: RoutineCompletion[];
   checkIns: SkinCheckIn[];
 };
 
-/** What the scheduling engine returns for a given calendar date. */
+/** What the scheduling engine decides for one calendar night. */
 export type NightPlan = {
-  kind: 'tretinoin' | 'recovery' | 'derma_stamp';
-  maskId?: string;
-  maskMovedFrom?: string;
-  /** Set when a treatment night was moved off the derma stamp night. */
-  tretinoinMovedFrom?: string;
+  kind: NightKind;
+  mask?: MaskKind;
+  /** What the full schedule has on this weekday, when tonight is gentler than that. */
+  fullKind: NightKind;
+  /** Why tonight is gentler than the full schedule, if it is. */
+  heldBack?: 'phase' | 'adapalene_not_ready';
 };
 
 export type DailyRoutine = {
   date: string;
+  week: number;
+  phase: PhaseIndex;
+  /** True while a manual or check-in step-back is lowering the phase. */
+  steppedBack: boolean;
   am: {
     type: RoutineType;
     title: string;
@@ -190,18 +130,11 @@ export type DailyRoutine = {
   };
   pm: {
     type: RoutineType;
+    kind: NightKind;
     title: string;
     subtitle: string;
     steps: RoutineStep[];
-    maskId?: string;
-    maskName?: string;
-    maskMovedFrom?: string;
-    tretinoinMovedFrom?: string;
+    mask?: MaskKind;
   };
-  stage: TretinoinProgressionStage | null;
-  stageIndex: number;
-  frequency: TretinoinFrequency | null;
-  progressionPaused: boolean;
-  pauseReason?: string;
   notices: string[];
 };

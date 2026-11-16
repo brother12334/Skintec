@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StoreProvider, useStore } from './store/store';
 import { ToastProvider, Notice, Button } from './components/ui';
 import { BottomNav, type TabKey } from './components/BottomNav';
-import { SkinTecIcon, SkinTecMark } from './icons/SkinTecIcon';
 import { TodayScreen } from './screens/Today';
-import { ScheduleScreen } from './screens/Schedule';
-import { ProductsScreen } from './screens/Products';
+import { WeekScreen } from './screens/Week';
+import { NotesScreen } from './screens/Notes';
 import { ProgressScreen } from './screens/Progress';
 import { SettingsScreen } from './screens/Settings';
 import { Onboarding } from './screens/Onboarding';
-import { toISO } from './engine/dates';
+import { formatHeaderDate, toISO } from './engine/dates';
 import { dayPart, resolveTheme } from './engine/daypart';
+import { getDailyRoutine } from './engine/scheduler';
+import { MOOD_CLASSES, moodClass, type Mood } from './engine/mood';
 
 /** Keeps the app on the right calendar day across midnight, sleep and timezone changes. */
 function useLocalClock() {
@@ -31,11 +32,29 @@ function useLocalClock() {
 
 const TAB_TITLES: Record<TabKey, string> = {
   today: 'Today',
-  schedule: 'Schedule',
-  products: 'Products',
+  week: 'Week',
+  notes: 'Notes',
   progress: 'Progress',
   settings: 'Settings',
 };
+
+/** Paints the whole document in one mood, including the strip behind the status bar. */
+function useDocumentMood(mood: Mood, theme: 'day' | 'night') {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.classList.remove(...MOOD_CLASSES);
+    root.classList.add(moodClass(mood));
+    const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+    const meta = document.querySelector('meta[name="theme-color"]:not([media])');
+    if (meta && bg) meta.setAttribute('content', bg);
+    try {
+      localStorage.setItem('skintec.paint', JSON.stringify({ mood, theme }));
+    } catch {
+      // Only used to paint the first frame; nothing depends on it.
+    }
+  }, [mood, theme]);
+}
 
 function Shell() {
   const { state, recovered, dismissRecovery } = useStore();
@@ -43,19 +62,19 @@ function Shell() {
   const [tab, setTab] = useState<TabKey>('today');
 
   const theme = resolveTheme(state.settings.themeMode, hour);
-  const part = dayPart(hour);
+  const now = dayPart(hour);
+  // Today shows the routine that is current; the other one is a tap away.
+  const [part, setPart] = useState(now);
+  useEffect(() => setPart(now), [now]);
+  const routine = useMemo(() => getDailyRoutine(state, today), [state, today]);
+  // The app wears the colour of the routine in front of you.
+  const shown = tab === 'today' ? part : now;
+  const mood: Mood = shown === 'am' ? 'am' : routine.pm.kind;
+  useDocumentMood(mood, theme);
 
   useEffect(() => {
     document.documentElement.classList.toggle('st-reduce', state.settings.reducedMotion);
   }, [state.settings.reducedMotion]);
-
-  // SkinTec dims itself after dark. The meta colour keeps the iOS status bar
-  // and the standalone window in step with the theme.
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'night' ? '#131219' : '#FFFBF2');
-  }, [theme]);
 
   useEffect(() => {
     document.title = tab === 'today' ? 'SkinTec' : `SkinTec — ${TAB_TITLES[tab]}`;
@@ -64,42 +83,29 @@ function Shell() {
   if (!state.settings.onboarded) return <Onboarding today={today} />;
 
   return (
-    <div className="st-app">
+    <div className={`st-app ${moodClass(mood)}`}>
       <header className="st-header">
         <div className="st-header-inner">
-          <div className="st-wordmark">
-            <SkinTecMark size={34} />
-            <div>
-              <div className="st-wordmark-name">SkinTec</div>
-              <div className="st-wordmark-sub">{TAB_TITLES[tab]}</div>
-            </div>
-          </div>
-          <SkinTecIcon
-            name={part === 'am' ? 'morning' : 'night'}
-            size={22}
-            title={part === 'am' ? 'Daytime' : 'Evening'}
-          />
+          <span className="st-wordmark">SkinTec</span>
+          <span className="st-header-date">{formatHeaderDate(today)}</span>
         </div>
       </header>
 
       <main className="st-main">
         {recovered ? (
-          <div className="st-mt-4">
-            <Notice tone="warn" icon="warning">
-              Some saved data could not be read, so SkinTec restored a safe default routine. Check your
-              treatment settings.
-              <div className="st-mt-3">
-                <Button variant="secondary" small onClick={dismissRecovery}>
-                  Got it
-                </Button>
-              </div>
-            </Notice>
-          </div>
+          <Notice tone="warn" icon="warning">
+            Some saved data could not be read, so SkinTec restored a safe default routine. Check your settings.
+            <div className="st-mt-3">
+              <Button variant="secondary" small onClick={dismissRecovery}>
+                Got it
+              </Button>
+            </div>
+          </Notice>
         ) : null}
 
-        {tab === 'today' ? <TodayScreen today={today} hour={hour} /> : null}
-        {tab === 'schedule' ? <ScheduleScreen today={today} /> : null}
-        {tab === 'products' ? <ProductsScreen today={today} /> : null}
+        {tab === 'today' ? <TodayScreen today={today} part={part} onPartChange={setPart} /> : null}
+        {tab === 'week' ? <WeekScreen today={today} /> : null}
+        {tab === 'notes' ? <NotesScreen /> : null}
         {tab === 'progress' ? <ProgressScreen today={today} /> : null}
         {tab === 'settings' ? <SettingsScreen today={today} /> : null}
       </main>

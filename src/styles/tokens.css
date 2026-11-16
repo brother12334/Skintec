@@ -1,139 +1,77 @@
-/* SkinTec design tokens — one source of truth for colour, type, spacing and depth. */
+/*
+ * SkinTec — Duotone.
+ *
+ * The whole app is one pastel and one deep ink of the same hue. Which pair is
+ * set by the mood: mornings are butter, BHA nights peach, adapalene nights
+ * periwinkle, recovery nights pink. Masks borrow mint as their second colour.
+ *
+ * A mood class (.mood-am, .mood-bha, .mood-adapalene, .mood-recovery) sets the
+ * pair; data-theme="night" on <html> flips it so the deep ink becomes the room
+ * and the pastel becomes the type.
+ */
 :root {
-  /* Palette: warm white, soft yellow, pale sky, peach, light green, cream */
-  --st-cream: #FFFBF2;
-  --st-warm-white: #FFFDF9;
-  --st-surface: #FFFFFF;
-  --st-yellow-100: #FFF4D2;
-  --st-yellow-200: #FFE7A6;
-  --st-yellow-400: #FFCE5C;
-  --st-yellow-600: #E0A32A;
-  --st-sky-100: #E7F3FC;
-  --st-sky-200: #CBE6F8;
-  --st-sky-500: #57A8DC;
-  --st-sky-700: #2C6E9B;
-  --st-peach-100: #FFEDE2;
-  --st-peach-300: #FFC9A8;
-  --st-peach-600: #D9743C;
-  --st-green-100: #E6F5E7;
-  --st-green-300: #B7E2BB;
-  --st-green-600: #3F8C4B;
+  /* Fixed swatches for colour-coding nights wherever they appear together. */
+  --c-am: #fcec9c;
+  --c-bha: #ffcfae;
+  --c-adapalene: #c3cbff;
+  --c-recovery: #f6bfd6;
+  --c-mint: #b9ecd6;
+  --c-swatch-ink: #1d1a22;
 
-  --st-ink: #2B2722;
-  --st-ink-soft: #5D564D;
-  --st-ink-muted: #8A8175;
-  --st-line: #EFE7DA;
-  --st-line-strong: #E2D7C5;
+  --display: 'Big Shoulders Display', 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif;
+  --text: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --st-focus: #2C6E9B;
+  --t-xs: 0.78rem;
+  --t-sm: 0.875rem;
+  --t-md: 1rem;
+  --t-lg: 1.125rem;
 
-  /* Surfaces composed from the palette (overridden wholesale by the night theme) */
-  --st-subtle: #F6F1E8;
-  --st-track: #F0E9DC;
-  --st-body-glow: radial-gradient(120% 60% at 50% -10%, var(--st-yellow-100) 0%, rgba(255, 244, 210, 0) 60%);
-  --st-header-bg: linear-gradient(180deg, rgba(255, 251, 242, 0.96) 70%, rgba(255, 251, 242, 0));
-  --st-nav-bg: rgba(255, 253, 249, 0.94);
-  --st-toast-bg: #2B2722;
-  --st-toast-ink: #FFFDF9;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
 
-  /* Type */
-  --st-font: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
-  --st-text-xs: 0.75rem;
-  --st-text-sm: 0.8125rem;
-  --st-text-md: 0.9375rem;
-  --st-text-lg: 1.0625rem;
-  --st-text-xl: 1.375rem;
-  --st-text-2xl: 1.75rem;
-  --st-text-3xl: 2.125rem;
+  /* Small radius scale, applied by role. Only the status pill is fully round. */
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 22px;
 
-  /* Spacing */
-  --st-1: 4px;
-  --st-2: 8px;
-  --st-3: 12px;
-  --st-4: 16px;
-  --st-5: 20px;
-  --st-6: 24px;
-  --st-8: 32px;
-  --st-10: 40px;
-  --st-12: 48px;
+  --fast: 140ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  --base: 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
 
-  /* Radius */
-  --st-r-sm: 10px;
-  --st-r-md: 16px;
-  --st-r-lg: 22px;
-  --st-r-xl: 28px;
-  --st-r-pill: 999px;
+  --nav-h: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tap: 48px;
 
-  /* Depth */
-  --st-shadow-sm: 0 1px 2px rgba(80, 64, 40, 0.05), 0 2px 8px rgba(80, 64, 40, 0.04);
-  --st-shadow-md: 0 2px 6px rgba(80, 64, 40, 0.06), 0 10px 24px rgba(80, 64, 40, 0.07);
-  --st-shadow-lg: 0 6px 16px rgba(80, 64, 40, 0.08), 0 20px 44px rgba(80, 64, 40, 0.10);
-
-  /* Motion */
-  --st-fast: 140ms cubic-bezier(0.2, 0.7, 0.3, 1);
-  --st-base: 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
-
-  /* Layout */
-  --st-nav-h: 62px;
-  --st-safe-top: env(safe-area-inset-top, 0px);
-  --st-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --st-tap: 44px;
+  /* Default mood (recovery) so nothing is ever unthemed. */
+  --bg: #f6bfd6;
+  --ink: #4a1730;
+  --ink-soft: #7a3a5a;
+  --soft: #fbdce9;
+  --line: #e9a3c2;
+  --accent: var(--c-mint);
+  --accent-ink: #12372a;
+  --danger: #9e1b2b;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root { --st-fast: 1ms; --st-base: 1ms; }
+  :root { --fast: 1ms; --base: 1ms; }
 }
 
-/**
- * Night theme.
- *
- * SkinTec dims itself after dark: the whole app is redefined here at the token
- * level, so every card, badge and control follows without duplicated styling.
- * Applied via data-theme="night" on <html>, set from the device clock (or the
- * Appearance setting).
- */
-:root[data-theme='night'] {
-  --st-cream: #131219;
-  --st-warm-white: #1A1922;
-  --st-surface: #201E2A;
+/* ---------------- Day: pastel room, deep ink ---------------- */
+.mood-am        { --bg: #fcec9c; --ink: #4a3c06; --ink-soft: #6f5c12; --soft: #fff6c9; --line: #e8d36a; --accent: var(--c-bha);      --accent-ink: #5a2408; }
+.mood-bha       { --bg: #ffcfae; --ink: #5a2408; --ink-soft: #84411d; --soft: #ffe4d1; --line: #f2b38c; --accent: var(--c-recovery); --accent-ink: #4a1730; }
+.mood-adapalene { --bg: #c3cbff; --ink: #1c2366; --ink-soft: #3a4291; --soft: #dde1ff; --line: #a6b0f4; --accent: var(--c-mint);     --accent-ink: #12372a; }
+.mood-recovery  { --bg: #f6bfd6; --ink: #4a1730; --ink-soft: #7a3a5a; --soft: #fbdce9; --line: #e9a3c2; --accent: var(--c-mint);     --accent-ink: #12372a; }
 
-  --st-yellow-100: #372D14;
-  --st-yellow-200: #4A3C1B;
-  --st-yellow-400: #F0BE5C;
-  --st-yellow-600: #F2D089;
-
-  --st-sky-100: #16293A;
-  --st-sky-200: #21384C;
-  --st-sky-500: #5EA9DD;
-  --st-sky-700: #A3D2F2;
-
-  --st-peach-100: #3A2419;
-  --st-peach-300: #5C3B27;
-  --st-peach-600: #F2A97C;
-
-  --st-green-100: #17301D;
-  --st-green-300: #2E5B38;
-  --st-green-600: #92D89E;
-
-  --st-ink: #F3EFE8;
-  --st-ink-soft: #C2BAAE;
-  --st-ink-muted: #8E8679;
-  --st-line: #2A2733;
-  --st-line-strong: #3B3745;
-
-  --st-focus: #8CC6EE;
-
-  --st-subtle: #2A2733;
-  --st-track: #2A2733;
-  --st-body-glow: radial-gradient(120% 60% at 50% -10%, #23203180 0%, rgba(35, 32, 49, 0) 62%);
-  --st-header-bg: linear-gradient(180deg, rgba(19, 18, 25, 0.96) 70%, rgba(19, 18, 25, 0));
-  --st-nav-bg: rgba(26, 25, 34, 0.94);
-  --st-toast-bg: #F3EFE8;
-  --st-toast-ink: #201E2A;
-
-  --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.24);
-  --st-shadow-md: 0 2px 6px rgba(0, 0, 0, 0.36), 0 10px 24px rgba(0, 0, 0, 0.30);
-  --st-shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.42), 0 20px 44px rgba(0, 0, 0, 0.38);
-
-  color-scheme: dark;
-}
+/* ---------------- Night: deep room, pastel ink ---------------- */
+:root[data-theme='night'] { color-scheme: dark; --danger: #ffb3bd; }
+:root[data-theme='night'] .mood-am,        :root[data-theme='night'].mood-am        { --bg: #2a2306; --ink: #fcec9c; --ink-soft: #d8c87a; --soft: #3a3110; --line: #574a1c; }
+:root[data-theme='night'] .mood-bha,       :root[data-theme='night'].mood-bha       { --bg: #2e1509; --ink: #ffcfae; --ink-soft: #e0a987; --soft: #42210f; --line: #63361c; }
+:root[data-theme='night'] .mood-adapalene, :root[data-theme='night'].mood-adapalene { --bg: #12173f; --ink: #c3cbff; --ink-soft: #9aa3e6; --soft: #1e2457; --line: #343c80; }
+:root[data-theme='night'] .mood-recovery,  :root[data-theme='night'].mood-recovery  { --bg: #2a0f1d; --ink: #f6bfd6; --ink-soft: #d494b2; --soft: #3d1a2c; --line: #5e2f47; }

@@ -2,6 +2,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { ErrorBoundary } from './ErrorBoundary';
+import '@fontsource/big-shoulders-display/latin-700';
+import '@fontsource/big-shoulders-display/latin-800';
+import '@fontsource/big-shoulders-display/latin-900';
+import '@fontsource/atkinson-hyperlegible/latin-400';
+import '@fontsource/atkinson-hyperlegible/latin-700';
 import './styles/global.css';
 
 const container = document.getElementById('root');

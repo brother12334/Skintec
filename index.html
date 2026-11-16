@@ -3,10 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>SkinTec — Skincare Routine Companion</title>
-    <meta name="description" content="SkinTec is a bright, intelligent skincare routine companion that plans your mornings, nights, tretinoin progression and recovery for you." />
-    <meta name="theme-color" content="#FFFBF2" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131219" />
+    <title>SkinTec</title>
+    <meta name="description" content="SkinTec walks you through your skincare plan one step at a time: dapsone mornings, BHA, adapalene and recovery nights." />
+    <meta name="theme-color" content="#f6bfd6" />
     <link rel="manifest" href="/Skintec/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/Skintec/icons/skintec-mark.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/Skintec/icons/icon-192.png" />
@@ -18,55 +17,37 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="SkinTec" />
     <meta name="application-name" content="SkinTec" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <script>
+        <script>
       /*
-       * Paint in the right theme from the very first frame. React sets this too,
-       * but not until it has mounted — until then the status bar strip and the
-       * launch screen would show the day palette at night.
-       *
-       * Mirrors resolveTheme() in src/engine/daypart.ts.
+       * Paint the first frame in the colour SkinTec last showed. React repaints
+       * once it knows today's routine; this only stops a flash of the wrong
+       * colour behind the status bar and the launch screen.
        */
       (function () {
-        var DAY_START = 5;
-        var NIGHT_START = 18;
-        var mode = 'auto';
+        var BG = {
+          day: { am: '#fcec9c', bha: '#ffcfae', adapalene: '#c3cbff', recovery: '#f6bfd6' },
+          night: { am: '#2a2306', bha: '#2e1509', adapalene: '#12173f', recovery: '#2a0f1d' }
+        };
+        var mood = 'recovery';
+        var theme = 'day';
         try {
-          var saved = localStorage.getItem('skintec.state.v1');
-          if (saved) {
-            var themeMode = JSON.parse(saved).settings.themeMode;
-            if (themeMode === 'light' || themeMode === 'dark' || themeMode === 'auto') mode = themeMode;
-          }
+          var paint = JSON.parse(localStorage.getItem('skintec.paint') || 'null');
+          if (paint && BG.day[paint.mood]) mood = paint.mood;
+          if (paint && (paint.theme === 'day' || paint.theme === 'night')) theme = paint.theme;
         } catch (error) {
-          /* Unreadable storage just means we fall back to the clock. */
+          /* Unreadable storage just means the default colour. */
         }
-        var hour = new Date().getHours();
-        var night =
-          mode === 'dark' || (mode !== 'light' && (hour < DAY_START || hour >= NIGHT_START));
-        document.documentElement.dataset.theme = night ? 'night' : 'day';
+        var root = document.documentElement;
+        root.dataset.theme = theme;
+        root.classList.add('mood-' + mood);
         var meta = document.querySelector('meta[name="theme-color"]:not([media])');
-        if (meta) meta.setAttribute('content', night ? '#131219' : '#FFFBF2');
+        if (meta) meta.setAttribute('content', BG[theme][mood]);
       })();
     </script>
   </head>
   <body>
     <div id="root">
       <div class="boot-screen">
-        <svg class="boot-mark" viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="boot-tile" x1="0" y1="0" x2="0.35" y2="1">
-              <stop offset="0" stop-color="#FFE08C" />
-              <stop offset="0.55" stop-color="#FFC061" />
-              <stop offset="1" stop-color="#FFA97A" />
-            </linearGradient>
-          </defs>
-          <rect width="64" height="64" rx="14" fill="url(#boot-tile)" />
-          <path
-            fill="#FFFDF8"
-            fill-rule="evenodd"
-            d="M32 9.4c10.9 0 18.4 3.5 18.4 9.2 0 4.1-1.4 11.3-3.8 18.5C43.9 46.4 38.9 55 32 55s-11.9-8.6-14.6-17.9C15 29.9 13.6 22.7 13.6 18.6c0-5.7 7.5-9.2 18.4-9.2Z M17.9 28.4a5 2.8 0 1 0 10 0a5 2.8 0 1 0-10 0Z M36.1 28.4a5 2.8 0 1 0 10 0a5 2.8 0 1 0-10 0Z M26.2 42.6a5.8 2.7 0 1 0 11.6 0a5.8 2.7 0 1 0-11.6 0Z"
-          />
-        </svg>
         <p class="boot-name">SkinTec</p>
       </div>
     </div>

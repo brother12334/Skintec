@@ -1,441 +1,173 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import type { ThemeMode, TretinoinFrequency } from '../types';
-import { FREQUENCY_LABEL, FREQUENCY_SHORT } from '../data/defaults';
-import { WEEKDAY_KEYS, WEEKDAY_LABELS, isValidISO } from '../engine/dates';
-import { effectiveProgression } from '../engine/progression';
-import { SkinTecIcon } from '../icons/SkinTecIcon';
-import { Badge, Button, Field, Modal, Notice, Segmented, SettingRow, Switch, useToast } from '../components/ui';
-import { MorningChooser } from '../components/MorningChooser';
-
-const FREQUENCIES: TretinoinFrequency[] = [
-  'twice_weekly',
-  'three_times_weekly',
-  'every_other_night',
-  'nightly',
-];
+import type { ThemeMode } from '../types';
+import { addDays, formatShortDate, isValidISO, daysBetween } from '../engine/dates';
+import { Button, Field, Modal, Segmented, SettingRow, Switch, useToast } from '../components/ui';
 
 export function SettingsScreen({ today }: { today: string }) {
-  const { state, updateSettings, updateProgression, updateMask, upsertTreatment, resetAll } = useStore();
+  const { state, updateSettings, upsertProduct, resetAll } = useStore();
   const toast = useToast();
   const [confirmReset, setConfirmReset] = useState(false);
-  const progression = effectiveProgression(state, today);
-  const tretinoinTreatment = state.treatments.find((t) => t.id === 'treatment-tretinoin');
+  const { settings } = state;
+  const stepBackActive = isValidISO(settings.stepBackUntil) && daysBetween(today, settings.stepBackUntil!) >= 0;
+  const notifications = settings.notifications;
 
   return (
     <>
-      <header className="st-mt-4">
-        <p className="st-eyebrow">Settings</p>
-        <h1 className="st-screen-title">SkinTec</h1>
-        <p className="st-screen-sub">Your routine, treatment schedule and reminders.</p>
-      </header>
-
-      {/* ---------------- Morning ---------------- */}
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <h2 className="st-section-title" style={{ margin: 0 }}>
-            Morning
-          </h2>
-          <SkinTecIcon name="morning" size={22} />
-        </div>
-        <p className="st-xs st-muted st-mt-2">
-          Pick what your mornings look like. Nothing else is ever added automatically.
-        </p>
-        <div className="st-mt-3">
-          <MorningChooser
-            state={state}
-            value={state.settings.morningMode}
-            onChange={(mode) => {
-              updateSettings({ morningMode: mode });
-              toast(
-                mode === 'skin_aqua' ? 'Mornings: UV serum only' : 'Mornings: moisturizer and sunscreen',
-                'morning',
-              );
-            }}
-          />
-        </div>
+      <section className="hero">
+        <span className="kicker">SkinTec</span>
+        <h1 className="big">Settings</h1>
       </section>
 
-      {/* ---------------- Tretinoin ---------------- */}
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <h2 className="st-section-title" style={{ margin: 0 }}>
-            Tretinoin
-          </h2>
-          <SkinTecIcon name="tretinoin" size={22} />
-        </div>
-
-        <SettingRow title="Tretinoin active" sub="Turn off to schedule recovery nights only.">
-          <Switch
-            checked={state.settings.tretinoinActive}
-            label="Tretinoin active"
-            onChange={(next) => updateSettings({ tretinoinActive: next })}
-          />
-        </SettingRow>
-
-        <div className="st-mt-4">
-          <Field label="Concentration" htmlFor="tret-strength" hint="For your reference only — SkinTec never changes a prescription.">
+      <section>
+        <h2 className="subtitle">Plan</h2>
+        <div className="st-mt-3 st-stack">
+          <Field label="Day 1 of the plan" htmlFor="start-date" hint="Weeks 1–2 start slowly, adapalene joins in week 3, the full schedule runs from week 5.">
             <input
-              id="tret-strength"
-              className="st-input"
-              value={state.settings.tretinoinConcentration}
-              onChange={(e) => {
-                updateSettings({ tretinoinConcentration: e.target.value });
-                if (tretinoinTreatment) upsertTreatment({ ...tretinoinTreatment, concentration: e.target.value });
-              }}
-              placeholder="e.g. 0.025%"
-            />
-          </Field>
-
-          <Field label="Restart date" htmlFor="tret-restart" hint="The schedule pattern is generated from this date.">
-            <input
-              id="tret-restart"
+              id="start-date"
               type="date"
               className="st-input"
-              value={state.settings.restartDate}
+              value={settings.startDate}
               onChange={(e) => {
-                if (!isValidISO(e.target.value)) return;
-                updateSettings({ restartDate: e.target.value });
-                updateProgression({ stageStartedAt: e.target.value, currentStage: 0 });
-                toast('Restart date updated', 'calendar');
+                if (isValidISO(e.target.value)) updateSettings({ startDate: e.target.value });
               }}
             />
           </Field>
-
-          <Field
-            label="Prescriber-approved maximum frequency"
-            htmlFor="tret-max"
-            hint="SkinTec progresses up to this frequency and never beyond it."
-          >
-            <select
-              id="tret-max"
-              className="st-select"
-              value={state.progression.approvedMaxFrequency}
-              onChange={(e) => {
-                updateProgression({ approvedMaxFrequency: e.target.value as TretinoinFrequency });
-                toast('Approved maximum updated', 'compatibility');
-              }}
-            >
-              {FREQUENCIES.map((f) => (
-                <option key={f} value={f}>
-                  {FREQUENCY_LABEL[f]}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Stage duration" htmlFor="tret-duration" hint="How long SkinTec stays at each frequency before increasing.">
-            <select
-              id="tret-duration"
-              className="st-select"
-              value={state.progression.stageDurationWeeks}
-              onChange={(e) => {
-                const weeks = Number.parseInt(e.target.value, 10);
-                updateProgression({ stageDurationWeeks: weeks });
-                toast('Stage duration updated', 'calendar');
-              }}
-            >
-              {[1, 2, 3, 4, 6, 8].map((w) => (
-                <option key={w} value={w}>
-                  {w} {w === 1 ? 'week' : 'weeks'}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-
-        <SettingRow
-          title="Pause progression"
-          sub={progression.paused ? progression.pauseReason ?? 'Progression is paused.' : 'Hold the current frequency.'}
-        >
-          <Switch
-            checked={state.progression.paused}
-            label="Pause progression"
-            onChange={(next) =>
-              updateProgression({
-                paused: next,
-                pauseReason: next ? 'You paused progression in Settings.' : undefined,
-              })
-            }
-          />
-        </SettingRow>
-
-        <div className="st-mt-4 st-flex-between">
-          <div>
-            <div className="st-row-title">Current stage</div>
-            <div className="st-row-sub">
-              {progression.frequency ? FREQUENCY_LABEL[progression.frequency] : 'Not scheduled'}
-            </div>
-          </div>
-          <Badge tone="treat" icon="tretinoin">
-            {progression.stage ? FREQUENCY_SHORT[progression.stage.frequency] : '—'}
-          </Badge>
-        </div>
-
-        <div className="st-mt-4">
-          <Field label="Prescriber notes" htmlFor="tret-notes" hint="Saved on this device only.">
-            <textarea
-              id="tret-notes"
-              className="st-textarea"
-              value={state.settings.prescriberNotes}
-              onChange={(e) => updateSettings({ prescriberNotes: e.target.value })}
-              placeholder="What your dermatologist or prescriber told you to do."
-            />
-          </Field>
-        </div>
-
-        <Notice tone="plain" icon="info">
-          SkinTec is a routine organiser, not a medical service. It never changes a prescription and never
-          exceeds your approved frequency. If irritation is significant or persistent, talk to your
-          dermatologist or prescriber.
-        </Notice>
-      </section>
-
-      {/* ---------------- Retinol ---------------- */}
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <h2 className="st-section-title" style={{ margin: 0 }}>
-            Retinol
-          </h2>
-          <SkinTecIcon name="retinol" size={22} />
         </div>
         <SettingRow
-          title="Include retinol on recovery nights"
-          sub="Retinol is never scheduled on a tretinoin night."
+          title="I have adapalene"
+          sub="Bought Differin gel and checked with your dapsone prescriber. Until then, adapalene nights are recovery nights."
         >
           <Switch
-            checked={state.settings.retinolActive}
-            label="Retinol on recovery nights"
+            checked={settings.adapaleneReady}
+            label="I have adapalene"
             onChange={(next) => {
-              updateSettings({ retinolActive: next });
-              if (next) toast('Retinol added to recovery nights only', 'compatibility');
+              updateSettings({ adapaleneReady: next });
+              toast(next ? 'Adapalene nights are on' : 'Adapalene nights are recovery for now', 'calendar');
             }}
           />
         </SettingRow>
-      </section>
-
-      {/* ---------------- Derma stamp ---------------- */}
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <h2 className="st-section-title" style={{ margin: 0 }}>
-            Derma stamp
-          </h2>
-          <SkinTecIcon name="dermastamp" size={22} />
-        </div>
         <SettingRow
-          title="Weekly derma stamp"
-          sub="Followed immediately by argan oil, then moisturizer."
+          title="Go back a step for a week"
+          sub={
+            stepBackActive
+              ? `On until ${formatShortDate(settings.stepBackUntil!)}. The plan runs one phase gentler.`
+              : 'Use this if your skin gets irritated. An irritated check-in does it for you too.'
+          }
         >
-          <Switch
-            checked={state.settings.dermaStampActive}
-            label="Weekly derma stamp"
-            onChange={(next) => {
-              updateSettings({ dermaStampActive: next });
-              toast(next ? 'Derma stamp scheduled weekly' : 'Derma stamp off', 'dermastamp');
-            }}
-          />
-        </SettingRow>
-        <div className="st-mt-3">
-          <Field label="Night" htmlFor="ds-day" hint="Tretinoin moves off this night automatically.">
-            <select
-              id="ds-day"
-              className="st-select"
-              value={state.settings.dermaStampDay}
-              disabled={!state.settings.dermaStampActive}
-              onChange={(e) => {
-                updateSettings({ dermaStampDay: e.target.value });
-                toast('Derma stamp night updated', 'calendar');
+          {stepBackActive ? (
+            <Button variant="secondary" small onClick={() => updateSettings({ stepBackUntil: undefined })}>
+              Stop
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              small
+              onClick={() => {
+                updateSettings({ stepBackUntil: addDays(today, 6) });
+                toast('Stepped back for a week', 'recovery');
               }}
             >
-              {WEEKDAY_KEYS.map((key) => (
-                <option key={key} value={key}>
-                  {WEEKDAY_LABELS[key]}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <Notice tone="plain" icon="compatibility">
-          SkinTec never schedules tretinoin, retinol or a mask on a derma stamp night. If the pattern wanted
-          a treatment night here, it moves to the nearest suitable night.
-        </Notice>
+              Step back
+            </Button>
+          )}
+        </SettingRow>
       </section>
 
-      {/* ---------------- Masks ---------------- */}
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <h2 className="st-section-title" style={{ margin: 0 }}>
-            Masks
-          </h2>
-          <SkinTecIcon name="mask" size={22} />
-        </div>
-        {state.masks.map((mask) => (
-          <div key={mask.id} className="st-mt-4" style={{ borderTop: '1px solid var(--st-line)', paddingTop: 'var(--st-4)' }}>
-            <div className="st-flex-between">
-              <div className="st-row-main">
-                <div className="st-row-title">{mask.name}</div>
-                <div className="st-row-sub">
-                  {mask.avoidWithTretinoin ? 'Recovery nights only' : 'Flexible'}
-                  {mask.avoidWithMaskIds.length > 0 ? ' · never stacked with its conflicting mask' : ''}
-                </div>
+      <section>
+        <h2 className="subtitle">Products</h2>
+        <p className="st-small st-muted st-mt-2">Rename anything to what’s on your bottle. Turn a mask off if you don’t have one.</p>
+        <div className="st-mt-3 st-stack">
+          {state.products.map((p) => (
+            <div key={p.id} className="st-flex" style={{ alignItems: 'flex-end' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Field label={p.category} htmlFor={`product-${p.id}`}>
+                  <input
+                    id={`product-${p.id}`}
+                    className="st-input"
+                    value={p.shortName ?? p.name}
+                    onChange={(e) => upsertProduct({ ...p, shortName: e.target.value })}
+                  />
+                </Field>
               </div>
-              <Switch
-                checked={mask.enabled}
-                label={`${mask.name} enabled`}
-                onChange={(next) => updateMask(mask.id, { enabled: next })}
-              />
+              {p.category === 'mask' ? (
+                <div style={{ paddingBottom: 8 }}>
+                  <Switch checked={p.active} label={`${p.name} on`} onChange={(next) => upsertProduct({ ...p, active: next })} />
+                </div>
+              ) : null}
             </div>
-
-            <div className="st-grid-2 st-mt-3">
-              <Field label="Times per week" htmlFor={`${mask.id}-freq`}>
-                <select
-                  id={`${mask.id}-freq`}
-                  className="st-select"
-                  value={mask.frequencyLimit}
-                  onChange={(e) => updateMask(mask.id, { frequencyLimit: Number.parseInt(e.target.value, 10) })}
-                >
-                  {[1, 2, 3].map((n) => (
-                    <option key={n} value={n}>
-                      {n}×
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Preferred day" htmlFor={`${mask.id}-day`}>
-                <select
-                  id={`${mask.id}-day`}
-                  className="st-select"
-                  value={mask.preferredDays[0] ?? 'sat'}
-                  onChange={(e) => updateMask(mask.id, { preferredDays: [e.target.value] })}
-                >
-                  {WEEKDAY_KEYS.map((key) => (
-                    <option key={key} value={key}>
-                      {WEEKDAY_LABELS[key]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-          </div>
-        ))}
-        <Notice tone="plain" icon="compatibility">
-          If a preferred day lands on a treatment night, SkinTec moves the mask to the nearest suitable
-          recovery night.
-        </Notice>
+          ))}
+        </div>
       </section>
 
-      {/* ---------------- Notifications ---------------- */}
-      <section className="st-card st-mt-4">
-        <div className="st-flex-between">
-          <h2 className="st-section-title" style={{ margin: 0 }}>
-            Reminders
-          </h2>
-          <SkinTecIcon name="wait" size={22} />
-        </div>
-        <SettingRow title="Morning reminder" sub={state.settings.notifications.morningTime}>
+      <section>
+        <h2 className="subtitle">Reminders</h2>
+        <SettingRow title="Morning reminder" sub={notifications.morningTime}>
           <Switch
-            checked={state.settings.notifications.morningReminder}
+            checked={notifications.morningReminder}
             label="Morning reminder"
-            onChange={(next) =>
-              updateSettings({ notifications: { ...state.settings.notifications, morningReminder: next } })
-            }
+            onChange={(next) => updateSettings({ notifications: { ...notifications, morningReminder: next } })}
           />
         </SettingRow>
-        <SettingRow title="Night reminder" sub={state.settings.notifications.nightTime}>
+        <SettingRow title="Night reminder" sub={notifications.nightTime}>
           <Switch
-            checked={state.settings.notifications.nightReminder}
+            checked={notifications.nightReminder}
             label="Night reminder"
-            onChange={(next) =>
-              updateSettings({ notifications: { ...state.settings.notifications, nightReminder: next } })
-            }
-          />
-        </SettingRow>
-        <SettingRow title="Unfinished routine reminder" sub="A nudge if a routine is still open.">
-          <Switch
-            checked={state.settings.notifications.completionReminder}
-            label="Routine completion reminder"
-            onChange={(next) =>
-              updateSettings({ notifications: { ...state.settings.notifications, completionReminder: next } })
-            }
+            onChange={(next) => updateSettings({ notifications: { ...notifications, nightReminder: next } })}
           />
         </SettingRow>
         <div className="st-grid-2 st-mt-3">
-          <Field label="Morning time" htmlFor="rem-am">
+          <Field label="Morning" htmlFor="rem-am">
             <input
               id="rem-am"
               type="time"
               className="st-input"
-              value={state.settings.notifications.morningTime}
-              onChange={(e) =>
-                updateSettings({ notifications: { ...state.settings.notifications, morningTime: e.target.value } })
-              }
+              value={notifications.morningTime}
+              onChange={(e) => updateSettings({ notifications: { ...notifications, morningTime: e.target.value } })}
             />
           </Field>
-          <Field label="Night time" htmlFor="rem-pm">
+          <Field label="Night" htmlFor="rem-pm">
             <input
               id="rem-pm"
               type="time"
               className="st-input"
-              value={state.settings.notifications.nightTime}
-              onChange={(e) =>
-                updateSettings({ notifications: { ...state.settings.notifications, nightTime: e.target.value } })
-              }
+              value={notifications.nightTime}
+              onChange={(e) => updateSettings({ notifications: { ...notifications, nightTime: e.target.value } })}
             />
           </Field>
         </div>
-        <p className="st-xs st-muted">
-          Reminders appear inside SkinTec while it is open. iPhone home-screen apps cannot send system
-          notifications unless you allow them in Safari.
-        </p>
+        <p className="st-xs st-muted st-mt-2">Reminders show inside SkinTec while it’s open.</p>
       </section>
 
-      {/* ---------------- Accessibility & data ---------------- */}
-      <section className="st-card st-mt-4">
-        <h2 className="st-section-title">Display and data</h2>
-        <div className="st-field">
+      <section>
+        <h2 className="subtitle">Display</h2>
+        <div className="st-field st-mt-3">
           <span className="st-label">Appearance</span>
           <Segmented<ThemeMode>
             label="Appearance"
-            value={state.settings.themeMode}
+            value={settings.themeMode}
             onChange={(mode) => updateSettings({ themeMode: mode })}
             options={[
+              { value: 'light', label: 'Pastel' },
               { value: 'auto', label: 'Auto' },
-              { value: 'light', label: 'Day', icon: 'morning' },
-              { value: 'dark', label: 'Night', icon: 'night' },
+              { value: 'dark', label: 'Dark' },
             ]}
           />
-          <p className="st-hint">Auto is bright through the day and dark from 6pm.</p>
+          <p className="st-hint">Auto switches to dark from 6pm. Dark keeps the same colors, just dimmed.</p>
         </div>
-        <SettingRow title="Reduce motion" sub="Turn off transitions and animations.">
-          <Switch
-            checked={state.settings.reducedMotion}
-            label="Reduce motion"
-            onChange={(next) => updateSettings({ reducedMotion: next })}
-          />
+        <SettingRow title="Reduce motion" sub="Turn off transitions.">
+          <Switch checked={settings.reducedMotion} label="Reduce motion" onChange={(next) => updateSettings({ reducedMotion: next })} />
         </SettingRow>
-        <div className="st-mt-4">
-          <Button variant="danger" block icon="delete" onClick={() => setConfirmReset(true)}>
-            Reset SkinTec data
-          </Button>
-        </div>
       </section>
 
-      <section className="st-card st-mt-4">
-        <h2 className="st-section-title">About SkinTec</h2>
-        <p className="st-small st-soft">
-          SkinTec plans your mornings and nights, manages your tretinoin restart and frequency progression,
-          keeps recovery nights genuine and schedules masks only where they are compatible. Everything is
-          stored on this device.
-        </p>
-        <p className="st-xs st-muted st-mt-3">Version 1.0 · Routine organiser, not a medical device.</p>
-      </section>
+      <Button variant="danger" block icon="delete" onClick={() => setConfirmReset(true)}>
+        Reset SkinTec
+      </Button>
+      <p className="st-xs st-muted st-center">Everything stays on this device. SkinTec organizes your routine; it isn’t medical advice.</p>
 
       {confirmReset ? (
-        <Modal title="Reset SkinTec data" onClose={() => setConfirmReset(false)}>
-          <p className="st-soft">
-            This clears your completions, check-ins, product edits and treatment settings on this device, and
-            restarts the progression at 2 nights per week. It cannot be undone.
-          </p>
+        <Modal title="Reset SkinTec" onClose={() => setConfirmReset(false)}>
+          <p>This clears your logged routines, check-ins and product names on this device and restarts the plan today. It can’t be undone.</p>
           <div className="st-mt-6 st-stack-sm">
             <Button
               variant="danger"
