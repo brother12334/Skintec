@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { SkinTecIcon, SkinTecMark } from './icons/SkinTecIcon';
+import { SkinTecIcon } from './icons/SkinTecIcon';
 
 type State = { error: Error | null };
 
@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
       <div className="st-app">
         <main className="st-main st-mt-6">
           <div className="st-center st-mt-6">
-            <SkinTecMark size={54} />
+            <img src={`${import.meta.env.BASE_URL}icons/skintec-mark.svg`} width={54} height={54} alt="" />
           </div>
           <section className="st-card st-mt-4 st-center">
             <div style={{ color: 'var(--st-peach-600)' }}>
