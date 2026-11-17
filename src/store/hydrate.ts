@@ -44,6 +44,8 @@ export function hydrate(raw: unknown): { state: AppState; recovered: boolean } {
       startDate: !legacy && isValidISO(s.startDate) ? (s.startDate as string) : base.settings.startDate,
       adapaleneReady: !legacy && Boolean(s.adapaleneReady),
       stepBackUntil: !legacy && isValidISO(s.stepBackUntil) ? s.stepBackUntil : undefined,
+      scheduleShift:
+        !legacy && Number.isInteger(s.scheduleShift) && s.scheduleShift! >= 0 && s.scheduleShift! <= 6 ? s.scheduleShift! : 0,
     };
   } else {
     recovered = true;

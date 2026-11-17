@@ -92,6 +92,11 @@ export type Settings = {
   adapaleneReady: boolean;
   /** "Go back a step for a week": the plan runs one phase gentler through this date. */
   stepBackUntil?: string;
+  /**
+   * Runs the whole week this many days early (0–6). At 1, Sunday gets
+   * Monday's routine, Monday gets Tuesday's, and so on.
+   */
+  scheduleShift: number;
   notifications: NotificationSettings;
   themeMode: ThemeMode;
   reducedMotion: boolean;

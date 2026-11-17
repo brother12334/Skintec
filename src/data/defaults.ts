@@ -136,6 +136,7 @@ export function todayISO(date = new Date()): string {
 export const defaultSettings: Settings = {
   startDate: todayISO(),
   adapaleneReady: false,
+  scheduleShift: 0,
   notifications: {
     morningReminder: false,
     morningTime: '07:30',

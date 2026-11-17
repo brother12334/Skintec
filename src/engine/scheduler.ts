@@ -25,12 +25,18 @@ function step(
  * Which night is it?
  * ------------------------------------------------------------------ */
 
+/** The weekday whose routine runs on this date, after any schedule shift. */
+export function planWeekday(state: AppState, date: string) {
+  const shift = state.settings.scheduleShift ?? 0;
+  return weekdayKey(shift ? addDays(date, shift) : date);
+}
+
 /**
- * The night for a date comes from its weekday and the plan phase, nothing
- * else. Logged or not, the next day is always just the next weekday.
+ * The night for a date comes from its (shifted) weekday and the plan phase,
+ * nothing else. Logged or not, the next day is always just the next day.
  */
 export function planNight(state: AppState, date: string): NightPlan {
-  const day = weekdayKey(date);
+  const day = planWeekday(state, date);
   const full = WEEKLY_SCHEDULE[day];
   const { phase } = phaseOn(state, date);
 
