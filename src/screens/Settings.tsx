@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
 import type { ThemeMode } from '../types';
-import { addDays, formatShortDate, isValidISO, daysBetween } from '../engine/dates';
+import { addDays, formatShortDate, isValidISO, daysBetween, WEEKDAY_KEYS, WEEKDAY_LABELS } from '../engine/dates';
 import { Button, Field, Modal, Segmented, SettingRow, Switch, useToast } from '../components/ui';
 
 export function SettingsScreen({ today }: { today: string }) {
@@ -11,6 +11,7 @@ export function SettingsScreen({ today }: { today: string }) {
   const { settings } = state;
   const stepBackActive = isValidISO(settings.stepBackUntil) && daysBetween(today, settings.stepBackUntil!) >= 0;
   const notifications = settings.notifications;
+  const shift = settings.scheduleShift ?? 0;
 
   return (
     <>
@@ -72,6 +73,43 @@ export function SettingsScreen({ today }: { today: string }) {
             </Button>
           )}
         </SettingRow>
+      </section>
+
+      <section>
+        <h2 className="subtitle">Shift the week</h2>
+        <p className="st-small st-muted st-mt-2">
+          {shift === 0
+            ? 'Every night is on its usual weekday.'
+            : `Running ${shift} day${shift === 1 ? '' : 's'} early: Monday’s routine is on ${WEEKDAY_LABELS[WEEKDAY_KEYS[(7 - shift) % 7]]}.`}{' '}
+          Use this if you did a night on the wrong day and want to carry on from there.
+        </p>
+        <div className="st-flex st-mt-3" style={{ flexWrap: 'wrap' }}>
+          <Button
+            variant="secondary"
+            small
+            onClick={() => {
+              updateSettings({ scheduleShift: (shift + 1) % 7 });
+              toast('Week moved a day earlier', 'calendar');
+            }}
+          >
+            A day earlier
+          </Button>
+          <Button
+            variant="secondary"
+            small
+            onClick={() => {
+              updateSettings({ scheduleShift: (shift + 6) % 7 });
+              toast('Week moved a day later', 'calendar');
+            }}
+          >
+            A day later
+          </Button>
+          {shift !== 0 ? (
+            <Button variant="ghost" small onClick={() => updateSettings({ scheduleShift: 0 })}>
+              Back to normal
+            </Button>
+          ) : null}
+        </div>
       </section>
 
       <section>

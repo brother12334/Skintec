@@ -67,6 +67,13 @@ export function WeekScreen({ today }: { today: string }) {
         })}
       </div>
 
+      {state.settings.scheduleShift ? (
+        <Notice>
+          Your week runs {state.settings.scheduleShift} day{state.settings.scheduleShift === 1 ? '' : 's'} early. Change it in
+          Settings → Shift the week.
+        </Notice>
+      ) : null}
+
       <p className="st-small st-muted">
         Each night follows its weekday. If you miss one, nothing moves: the next day is just the next day.
       </p>

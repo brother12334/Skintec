@@ -157,6 +157,18 @@ test('masks are never required to finish a night', () => {
   assert.equal(mask.mandatory, false);
 });
 
+test('shifting the week a day early moves every night and mask up a day', () => {
+  const s = stateAt((st) => {
+    st.settings.scheduleShift = 1;
+  });
+  const sunday = addDays(START, 6);
+  assert.equal(planNight(s, sunday).kind, 'bha'); // Monday's routine
+  assert.equal(planNight(s, START).kind, 'recovery'); // Monday now runs Tuesday's
+  const w5 = planWeekNights(s, addDays(START, 28)).days.map((d) => d.plan.kind);
+  assert.deepEqual(w5, ['recovery', 'adapalene', 'recovery', 'bha', 'adapalene', 'recovery', 'bha']);
+  assert.equal(planNight(s, addDays(START, 33)).mask, 'clay'); // Saturday
+});
+
 test('an invalid date falls back instead of throwing', () => {
   const r = getDailyRoutine(stateAt(), 'not-a-date');
   assert.ok(r.pm.steps.length > 0);
