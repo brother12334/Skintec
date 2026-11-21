@@ -38,6 +38,8 @@ export type RoutineStep = {
   name: string;
   kind: RoutineStepKind;
   instruction: string;
+  /** Exactly how to do it, in order: amounts, where, how long. */
+  how?: string[];
   /** Extra notes from the plan, shown under the instruction. */
   tips?: string[];
   /** Required steps must be done before a routine counts as finished. */
