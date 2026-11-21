@@ -1,5 +1,6 @@
 import type { AppState, DailyRoutine, MaskKind, NightKind, NightPlan, Product, RoutineStep, RoutineType } from '../types';
 import { MASK_LABEL, NIGHT_LABEL, PRODUCT_IDS, WEEKLY_SCHEDULE } from '../data/defaults';
+import { HOW } from '../data/howto';
 import { addDays, isValidISO, startOfWeek, toISO, weekdayKey } from './dates';
 import { phaseOn } from './progression';
 
@@ -18,7 +19,7 @@ function step(
   productId?: string,
   tips?: string[],
 ): RoutineStep {
-  return { id, name, kind, instruction, mandatory, productId, tips };
+  return { id, name, kind, instruction, mandatory, productId, tips, how: HOW[id] };
 }
 
 /* ------------------------------------------------------------------ *
@@ -139,6 +140,7 @@ export function buildNight(state: AppState, plan: NightPlan): RoutineStep[] {
       'Dry face, dry hands. Massage for 1–2 minutes, mostly on your nose. Add water until it turns milky, then rinse.',
       true,
       PRODUCT_IDS.oilCleanser,
+      ['No scrubs, brushes or exfoliating pads. The massage and your BHA are all the exfoliation your skin needs with adapalene.'],
     ),
     step(
       'pm-blanc',
@@ -206,6 +208,9 @@ export function buildNight(state: AppState, plan: NightPlan): RoutineStep[] {
           ['Never over the active product. It makes it stronger and more irritating.'],
         ),
   );
+  // The Vaseline rule differs by night, so its how-to does too.
+  const vaseline = steps[steps.length - 1];
+  vaseline.how = HOW[plan.kind === 'recovery' ? 'pm-vaseline-recovery' : 'pm-vaseline-active'];
   return steps;
 }
 

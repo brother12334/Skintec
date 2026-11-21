@@ -169,6 +169,20 @@ test('shifting the week a day early moves every night and mask up a day', () => 
   assert.equal(planNight(s, addDays(START, 33)).mask, 'clay'); // Saturday
 });
 
+test('every step has a numbered how-to, including the nose exfoliating massage', () => {
+  const s = stateAt();
+  for (let i = 0; i < 35; i++) {
+    const r = getDailyRoutine(s, addDays(START, i));
+    for (const st of [...r.am.steps, ...r.pm.steps]) assert.ok((st.how?.length ?? 0) >= 2, st.id);
+  }
+  const oil = getDailyRoutine(s, START).pm.steps[0];
+  assert.ok(oil.how!.some((l) => l.includes('Exfoliating massage on your nose')));
+  const rec = getDailyRoutine(s, addDays(START, 1)).pm.steps.at(-1)!;
+  const bha = getDailyRoutine(s, START).pm.steps.at(-1)!;
+  assert.ok(rec.how!.some((l) => l.includes('whole face')));
+  assert.ok(bha.how!.some((l) => l.includes('grain of rice')));
+});
+
 test('an invalid date falls back instead of throwing', () => {
   const r = getDailyRoutine(stateAt(), 'not-a-date');
   assert.ok(r.pm.steps.length > 0);

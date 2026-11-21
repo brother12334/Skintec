@@ -76,6 +76,13 @@ export function RoutinePlayer({ mood, title, kicker, steps, initialCompleted, on
             <h2 className="player-name">{step.name}</h2>
             {!step.mandatory ? <span className="player-flag">Optional</span> : null}
             <p className="player-instr">{step.instruction}</p>
+            {step.how?.length ? (
+              <ol className="player-how">
+                {step.how.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ol>
+            ) : null}
             {step.tips?.length ? (
               <ul className="player-tips">
                 {step.tips.map((tip) => (

@@ -74,6 +74,7 @@ export const PLAN_NOTES: { title: string; items: string[] }[] = [
       'Blanc cleanser: this removes the oil film so it doesn’t clog your forehead.',
       'Pat completely dry. Actives sting more on damp skin.',
       'Tonight’s step from the schedule, then La Roche-Posay moisturizer, then Vaseline.',
+      'Exfoliation comes from the oil-cleanser massage on your nose and the BHA. No scrubs, brushes or exfoliating pads: with adapalene they irritate.',
     ],
   },
   {
